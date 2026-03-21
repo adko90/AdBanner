@@ -65,6 +65,82 @@
     padding: 6px 8px; border-radius: 6px; max-height: 120px; overflow-y: auto; width: 220px;
     pointer-events: none; line-height: 1.4;
   }
+  .event-log div { padding: 1px 0; }
+  .placement-status {
+    position: sticky;
+    top: 56px;
+    z-index: 9997;
+    margin: 10px 16px 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(29,29,31,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(15,23,42,0.06);
+  }
+  .placement-status h2 { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: #2f3137; margin-bottom: 6px; }
+  .placement-status-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .placement-summary-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: rgba(15,23,42,0.06); color: #334155; font-size: 10px; font-weight: 600; }
+  .placement-summary-pill strong { color: #0f172a; }
+  .placement-status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+  .placement-card { border-radius: 10px; border: 1px solid rgba(15,23,42,0.08); background: rgba(248,250,252,0.9); padding: 10px; }
+  .placement-card.rendering { border-color: rgba(22,163,74,0.25); background: rgba(240,253,244,0.96); }
+  .placement-card.skipped { border-color: rgba(245,158,11,0.22); background: rgba(255,251,235,0.96); }
+  .placement-card-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .placement-card strong { font-size: 11px; color: #111827; }
+  .placement-chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .placement-chip.live { background: rgba(22,163,74,0.12); color: #15803d; }
+  .placement-chip.skip { background: rgba(245,158,11,0.14); color: #b45309; }
+  .placement-card p { font-size: 10px; line-height: 1.4; color: #475569; }
+  .placement-card code { font-family: 'SF Mono', Monaco, monospace; font-size: 9px; background: rgba(148,163,184,0.12); border-radius: 4px; padding: 1px 4px; }
+  .install-panel {
+    margin: 10px 16px 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(29,29,31,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.9);
+    box-shadow: 0 10px 30px rgba(15,23,42,0.05);
+  }
+  .install-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .install-head h2 { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: #2f3137; }
+  .publish-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .publish-pill.live { background: rgba(22,163,74,0.12); color: #15803d; }
+  .publish-pill.draft { background: rgba(245,158,11,0.14); color: #b45309; }
+  .install-grid { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .install-panel input[type="text"] {
+    font-size: 10px; font-family: inherit; padding: 4px 6px; border: 1px solid var(--panel-border);
+    border-radius: 5px; width: 132px; background: #fff; color: var(--panel-text);
+  }
+  .install-link {
+    display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+    min-height: 24px; color: var(--panel-muted);
+  }
+  .install-meta { font-size: 10px; line-height: 1.5; color: #475569; margin-bottom: 8px; }
+  .install-code {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #dbeafe;
+    font: 500 10px/1.5 'SF Mono', Monaco, monospace;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+  .editor-layer { position: fixed; inset: 0; z-index: 10001; pointer-events: none; }
+  .editor-area { position: fixed; pointer-events: auto; border-radius: 18px; border: 2px solid rgba(59,130,246,0.85); box-shadow: 0 20px 55px rgba(15,23,42,0.14); overflow: hidden; background: rgba(15,23,42,0.16); user-select: none; }
+  .editor-area.invalid { border-color: rgba(239,68,68,0.92); box-shadow: 0 20px 55px rgba(127,29,29,0.2); }
+  .editor-media { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 40%), var(--editor-media, linear-gradient(135deg, #6C5CE7, #341f97)); background-size: cover; background-position: center; transform: scale(1.02); }
+  .editor-tint { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.12), rgba(15,23,42,0.38)); }
+  .editor-head { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; z-index: 2; }
+  .editor-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 999px; background: rgba(15,23,42,0.78); color: #f8fafc; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; }
+  .editor-badge::before { content: ''; width: 7px; height: 7px; border-radius: 999px; background: #34d399; }
+  .editor-area.invalid .editor-badge::before { background: #f87171; }
+  .editor-dims { padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,0.88); color: #0f172a; font-size: 10px; font-weight: 700; }
+  .editor-note { position: absolute; left: 12px; bottom: 12px; z-index: 2; padding: 6px 8px; border-radius: 10px; max-width: calc(100% - 72px); background: rgba(255,255,255,0.88); color: #0f172a; font-size: 10px; line-height: 1.35; }
+  .editor-area.invalid .editor-note { background: rgba(254,242,242,0.95); color: #991b1b; }
+  .editor-handle { position: absolute; width: 18px; height: 18px; right: 10px; bottom: 10px; border-radius: 6px; background: rgba(255,255,255,0.95); border: 1px solid rgba(15,23,42,0.12); cursor: nwse-resize; z-index: 3; }
+  .editor-handle::before { content: ''; position: absolute; inset: 4px; border-right: 2px solid rgba(15,23,42,0.4); border-bottom: 2px solid rgba(15,23,42,0.4); }
 
   /* ── Publisher Page ── */
   .page-header { background: #0a0a0a; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
@@ -107,6 +183,15 @@
 <div class="config-panel">
   <h1>Ad System</h1>
   <div class="config-group">
+    <label>Placement</label>
+    <select id="placementPreset">
+      <option value="autopilot">Autopilot Mix</option>
+      <option value="footer-focus">Footer Focus</option>
+      <option value="side-spotlight">Side Spotlight</option>
+      <option value="preview-drop">Preview Drop</option>
+    </select>
+  </div>
+  <div class="config-group">
     <label>Mode</label>
     <div class="tg" id="modeToggle">
       <button class="active" data-mode="solid">Solid</button>
@@ -131,7 +216,28 @@
       <button data-state="off">Off</button>
     </div>
   </div>
+  <div class="config-group">
+    <div class="tg" id="previewToggle">
+      <button data-preview="false" class="active">Live</button>
+      <button data-preview="true">Preview</button>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="tg" id="editorToggle">
+      <button data-editor="false" class="active">View</button>
+      <button data-editor="true">Editor</button>
+    </div>
+  </div>
+  <div class="config-group">
+    <label>Template</label>
+    <select id="editorTemplate">
+      <option value="optimal">Optimal</option>
+      <option value="balanced">Balanced</option>
+      <option value="compact">Compact</option>
+    </select>
+  </div>
   <button class="btn-sm" id="resetDismiss">Reset Dismiss</button>
+  <button class="btn-sm" id="resetTemplate">Reset Template</button>
   <button class="btn-sm" id="optimiserToggle">Image Optimiser</button>
   <div class="img-optimiser" id="imgOptimiser">
     <div class="img-optimiser-row">
@@ -144,6 +250,29 @@
     <div class="layer-preview" id="layerPreview"></div>
   </div>
 </div>
+
+<section class="placement-status" id="placementStatus">
+  <h2>Placement Runtime</h2>
+  <div class="placement-status-summary" id="placementStatusSummary"></div>
+  <div class="placement-status-grid" id="placementStatusGrid"></div>
+</section>
+
+<section class="install-panel" id="installPanel">
+  <div class="install-head">
+    <h2>Publish And Verify</h2>
+    <span class="publish-pill draft" id="publishState">Draft only</span>
+  </div>
+  <div class="install-grid">
+    <div class="config-group">
+      <label for="publishSiteId">Site ID</label>
+      <input type="text" id="publishSiteId" value="site_demo" spellcheck="false">
+    </div>
+    <button class="btn-sm" id="publishConfig">Publish Runtime Config</button>
+    <a class="btn-sm install-link" id="verifyHostLink" href="./verify-host.html?site=site_demo" target="_blank" rel="noreferrer">Open Verification Host</a>
+  </div>
+  <p class="install-meta" id="publishMeta">Publish saves the current placement preset and safe-zone geometry as the live runtime config for the selected site. The verification host loads that config through the same one-time install snippet a creator would place on their site.</p>
+  <pre class="install-code" id="installSnippet"></pre>
+</section>
 
 <!-- Event Log -->
 <div class="event-log" id="eventLog">Ad Events:</div>
@@ -187,7 +316,20 @@
   'use strict';
 
   /* ══ STATE ══ */
-  let state = { mode: 'solid', preset: 'capsule', accent: '#ff3b30', enabled: true, dismissed: { footer: false, side: false } };
+  let state = {
+    mode: 'solid',
+    preset: 'capsule',
+    accent: '#ff3b30',
+    enabled: true,
+    previewMode: false,
+    placementPreset: 'autopilot',
+    editorMode: false,
+    editorTemplate: 'optimal',
+    dismissed: { footer: false, side: false }
+  };
+  const editorState = { areas: {}, issues: {}, lastValidAreas: {}, interaction: null };
+  let rebuildQueued = false;
+  const placementConfidenceFloor = 0.7;
 
   /* ══ HELPERS ══ */
   const logEl = document.getElementById('eventLog');
@@ -202,6 +344,560 @@
   function setDismissed(z) { try { localStorage.setItem('ff_ad_dismissed_' + z, Date.now().toString()); } catch {} state.dismissed[z] = true; }
   function hexRgba(h, a) { return 'rgba(' + parseInt(h.slice(1,3),16) + ',' + parseInt(h.slice(3,5),16) + ',' + parseInt(h.slice(5,7),16) + ',' + a + ')'; }
   function darken(h, f) { return 'rgb(' + Math.round(parseInt(h.slice(1,3),16)*f) + ',' + Math.round(parseInt(h.slice(3,5),16)*f) + ',' + Math.round(parseInt(h.slice(5,7),16)*f) + ')'; }
+  function getDeviceClass() { if (window.innerWidth < 768) return 'mobile'; if (window.innerWidth < 1100) return 'tablet'; return 'desktop'; }
+  function getPageType() {
+    const article = document.querySelector('.article');
+    const hasArticleMeta = article && article.querySelector('.meta');
+    const paragraphCount = article ? article.querySelectorAll('p').length : 0;
+    if (article && hasArticleMeta && paragraphCount >= 4) return 'article';
+    if (document.querySelector('.hero-img-wrap')) return 'landing';
+    return 'generic';
+  }
+  function getPlacementRecommendation(pageType, deviceClass) {
+    if (pageType === 'article' && deviceClass === 'desktop') return 'autopilot';
+    if (pageType === 'article') return 'footer-focus';
+    if (pageType === 'landing' && deviceClass === 'desktop') return 'side-spotlight';
+    return 'footer-focus';
+  }
+  function getArticleBounds() {
+    const article = document.querySelector('.article');
+    return article ? article.getBoundingClientRect() : { left: 24, right: window.innerWidth - 24, top: 120, bottom: window.innerHeight - 120, width: window.innerWidth - 48 };
+  }
+  function getInlineTargetNode() {
+    const article = document.querySelector('.article');
+    if (!article) return null;
+    const paragraphs = article.querySelectorAll('p');
+    return paragraphs.length >= 3 ? paragraphs[2] : null;
+  }
+  function getManagedZones() {
+    const zones = ['footer'];
+    if (getDeviceClass() === 'desktop') zones.push('side');
+    if (getPageType() === 'article' && getInlineTargetNode()) zones.push('inline');
+    return zones;
+  }
+  function clamp(value, min, max) {
+    const safeMin = Number.isFinite(min) ? min : value;
+    const safeMax = Number.isFinite(max) ? max : value;
+    if (safeMax < safeMin) return safeMin;
+    return Math.min(Math.max(value, safeMin), safeMax);
+  }
+  function getZoneRules() {
+    const bounds = getArticleBounds();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const footerMinWidth = Math.min(320, Math.max(280, vw - 28, Math.min(bounds.width, 320)));
+    const inlineMinWidth = Math.min(Math.max(280, Math.min(bounds.width, 320)), Math.max(280, bounds.width));
+    return {
+      footer: {
+        minWidth: footerMinWidth,
+        maxWidth: Math.max(footerMinWidth, vw - 24),
+        minHeight: 132,
+        maxHeight: 170,
+        minX: () => 12,
+        maxX: (width) => vw - width - 12,
+        minY: () => Math.max(24, vh - 220),
+        maxY: (height) => vh - height - 8,
+        validate: (area) => {
+          const issues = [];
+          if (area.x < 12 || area.x + area.width > vw - 12) issues.push('Footer should stay inside the viewport with breathing room.');
+          if (area.y + area.height > vh - 8) issues.push('Footer should remain fully on screen.');
+          return issues;
+        }
+      },
+      side: {
+        minWidth: 286,
+        maxWidth: 340,
+        minHeight: 360,
+        maxHeight: 460,
+        minX: () => Math.max(vw * 0.52, vw - 348),
+        maxX: (width) => vw - width - 8,
+        minY: () => 80,
+        maxY: (height) => vh - height - 20,
+        validate: (area) => {
+          const issues = [];
+          if (area.x < Math.max(vw * 0.52, vw - 348)) issues.push('Side placement should stay in the right-hand safe zone.');
+          if (area.x + area.width > vw - 8) issues.push('Side placement must remain fully on screen.');
+          if (area.y < 80 || area.y + area.height > vh - 20) issues.push('Side placement must stay within the visible viewport.');
+          return issues;
+        }
+      },
+      inline: {
+        minWidth: inlineMinWidth,
+        maxWidth: Math.max(inlineMinWidth, bounds.width),
+        minHeight: 132,
+        maxHeight: 220,
+        minX: () => bounds.left,
+        maxX: (width) => bounds.right - width,
+        minY: () => bounds.top + 96,
+        maxY: (height) => Math.max(bounds.top + 96, bounds.bottom - height - 32),
+        validate: (area) => {
+          const issues = [];
+          if (area.x < bounds.left - 4 || area.x + area.width > bounds.right + 4) issues.push('Inline placement must stay aligned with the article column.');
+          if (area.y < bounds.top + 96 || area.y + area.height > bounds.bottom - 24) issues.push('Inline placement should remain inside the article reading flow.');
+          return issues;
+        }
+      }
+    };
+  }
+  function clampEditorArea(zone, area) {
+    const rule = getZoneRules()[zone];
+    if (!rule || !area) return area;
+    const width = clamp(area.width, rule.minWidth, rule.maxWidth);
+    const height = clamp(area.height, rule.minHeight, rule.maxHeight);
+    const x = clamp(area.x, rule.minX(width), rule.maxX(width));
+    const y = clamp(area.y, rule.minY(height), rule.maxY(height));
+    return { x, y, width, height };
+  }
+  function buildEditorTemplate(template) {
+    const bounds = getArticleBounds();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const footerWidth = Math.min(bounds.width + 120, vw - 28);
+    const balancedFooterWidth = Math.min(bounds.width + 40, vw - 36);
+    const compactFooterWidth = Math.min(bounds.width, vw - 40);
+    const templates = ({
+      optimal: {
+        footer: { x: (vw - footerWidth) / 2, y: vh - 156, width: footerWidth, height: 150 },
+        side: { x: vw - 302, y: Math.max(96, vh * 0.24), width: 286, height: 400 },
+        inline: { x: bounds.left, y: Math.max(170, bounds.top + 230), width: Math.min(bounds.width, 620), height: 176 }
+      },
+      balanced: {
+        footer: { x: (vw - balancedFooterWidth) / 2, y: vh - 148, width: balancedFooterWidth, height: 142 },
+        side: { x: vw - 286, y: Math.max(104, vh * 0.28), width: 298, height: 380 },
+        inline: { x: bounds.left + 8, y: Math.max(170, bounds.top + 220), width: Math.min(bounds.width - 16, 560), height: 164 }
+      },
+      compact: {
+        footer: { x: (vw - compactFooterWidth) / 2, y: vh - 138, width: compactFooterWidth, height: 132 },
+        side: { x: vw - 256, y: Math.max(108, vh * 0.32), width: 286, height: 360 },
+        inline: { x: bounds.left + 12, y: Math.max(176, bounds.top + 210), width: Math.min(bounds.width - 24, 500), height: 144 }
+      }
+    });
+    const baseTemplate = templates[template] || templates.optimal;
+    const next = {};
+    getManagedZones().forEach((zone) => {
+      if (baseTemplate[zone]) next[zone] = clampEditorArea(zone, baseTemplate[zone]);
+    });
+    return next;
+  }
+  function resetEditorAreas(template = state.editorTemplate) {
+    const next = buildEditorTemplate(template);
+    editorState.areas = { ...editorState.areas, ...next };
+    editorState.lastValidAreas = { ...editorState.lastValidAreas, ...next };
+    editorState.issues = {};
+  }
+  function ensureEditorAreas() {
+    const next = buildEditorTemplate(state.editorTemplate);
+    getManagedZones().forEach((zone) => {
+      if (!editorState.areas[zone] && next[zone]) editorState.areas[zone] = { ...next[zone] };
+      if (!editorState.lastValidAreas[zone] && editorState.areas[zone]) editorState.lastValidAreas[zone] = { ...editorState.areas[zone] };
+    });
+  }
+  function validateEditorAreas() {
+    ensureEditorAreas();
+    const rules = getZoneRules();
+    const issues = { footer: [], side: [], inline: [] };
+    let isValid = true;
+    getManagedZones().forEach((zone) => {
+      const area = editorState.areas[zone];
+      const rule = rules[zone];
+      if (!area || !rule) {
+        issues[zone] = ['Placement area is missing.'];
+        isValid = false;
+        return;
+      }
+      const zoneIssues = [];
+      if (area.width < rule.minWidth || area.width > rule.maxWidth) zoneIssues.push(`Width must stay between ${Math.round(rule.minWidth)}px and ${Math.round(rule.maxWidth)}px.`);
+      if (area.height < rule.minHeight || area.height > rule.maxHeight) zoneIssues.push(`Height must stay between ${Math.round(rule.minHeight)}px and ${Math.round(rule.maxHeight)}px.`);
+      zoneIssues.push(...rule.validate(area));
+      issues[zone] = zoneIssues;
+      if (zoneIssues.length) {
+        isValid = false;
+      } else {
+        editorState.lastValidAreas[zone] = { ...clampEditorArea(zone, area) };
+      }
+    });
+    editorState.issues = issues;
+    return { isValid, issues };
+  }
+  function getEditorArea(zone) { ensureEditorAreas(); return editorState.areas[zone] || null; }
+  function getRenderableArea(zone) {
+    validateEditorAreas();
+    if (!(editorState.issues[zone] || []).length && editorState.areas[zone]) {
+      return clampEditorArea(zone, editorState.areas[zone]);
+    }
+    if (editorState.lastValidAreas[zone]) {
+      return clampEditorArea(zone, editorState.lastValidAreas[zone]);
+    }
+    const fallback = buildEditorTemplate(state.editorTemplate)[zone];
+    return fallback ? clampEditorArea(zone, fallback) : null;
+  }
+  function clearEditorLayer() { document.getElementById('editorLayer')?.remove(); }
+  function clearPreviewAnchors() { document.getElementById('anchorPreviewLayer')?.remove(); }
+  function describeReason(reasonCode) {
+    const labels = {
+      eligible: 'placement resolved cleanly',
+      workspace_disabled: 'workspace switch is off',
+      dismissed: 'visitor dismissed this placement recently',
+      placement_disabled: 'placement is disabled',
+      anchor_low_confidence: 'anchor was detected but confidence is too low for no-code placement',
+      preview_only: 'placement is preview-only and live mode is active',
+      page_type_mismatch: 'placement is not targeted to this page type',
+      device_mismatch: 'device class is not targeted',
+      no_matching_placement: 'no placement is configured for this anchor'
+    };
+    return labels[reasonCode] || reasonCode.replace(/_/g, ' ');
+  }
+  function getPlacementLibrary() {
+    const base = { enabled: true, environment: 'live' };
+    const placements = {
+      autopilot: [
+        { ...base, placementId: 'placement-footer-primary', anchorType: 'footer', deviceTargets: ['desktop', 'tablet', 'mobile'], priority: 20 },
+        { ...base, placementId: 'placement-side-primary', anchorType: 'floating-right', pageTypes: ['article', 'landing'], deviceTargets: ['desktop'], priority: 10 },
+        { ...base, placementId: 'placement-inline-secondary', anchorType: 'inline-article', pageTypes: ['article'], deviceTargets: ['mobile', 'tablet'], priority: 18 }
+      ],
+      'footer-focus': [
+        { ...base, placementId: 'placement-footer-featured', anchorType: 'footer', deviceTargets: ['desktop', 'tablet', 'mobile'], priority: 30 }
+      ],
+      'side-spotlight': [
+        { ...base, placementId: 'placement-side-spotlight', anchorType: 'floating-right', pageTypes: ['article', 'landing'], deviceTargets: ['desktop'], priority: 30 },
+        { ...base, placementId: 'placement-footer-backfill', anchorType: 'footer', deviceTargets: ['tablet', 'mobile'], priority: 8 }
+      ],
+      'preview-drop': [
+        { ...base, placementId: 'placement-footer-live', anchorType: 'footer', deviceTargets: ['desktop', 'tablet', 'mobile'], priority: 20 },
+        { ...base, placementId: 'placement-side-preview', anchorType: 'floating-right', environment: 'preview', pageTypes: ['article', 'landing'], deviceTargets: ['desktop'], priority: 25 },
+        { ...base, placementId: 'placement-inline-preview', anchorType: 'inline-article', environment: 'preview', pageTypes: ['article'], deviceTargets: ['desktop', 'tablet', 'mobile'], priority: 22 }
+      ]
+    };
+    return placements[state.placementPreset] || placements.autopilot;
+  }
+  function getScriptInstallSnippet(siteId) {
+    return `<script>window.FF_AD_SITE = "${siteId}";</script>\n<script async src="/runtime/ad-placement-loader.js" data-config="/api/published/${siteId}.json"></script>`;
+  }
+  function getPublishedConfigKey(siteId) {
+    return `ff_published_site_${siteId}`;
+  }
+  function getPublishedConfig(siteId) {
+    try {
+      const raw = localStorage.getItem(getPublishedConfigKey(siteId));
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+  function getPublishSiteId() {
+    const input = document.getElementById('publishSiteId');
+    const siteId = (input && input.value.trim()) || 'site_demo';
+    return siteId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+  function serializePublishedAreas() {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const articleBounds = getArticleBounds();
+    const inlineTarget = getInlineTargetNode();
+    const inlineRect = inlineTarget ? inlineTarget.getBoundingClientRect() : null;
+    return getManagedZones().reduce((acc, zone) => {
+      const area = getRenderableArea(zone);
+      if (!area) return acc;
+      if (zone === 'footer') {
+        acc.footer = {
+          widthRatio: Number((area.width / viewportWidth).toFixed(4)),
+          height: Math.round(area.height),
+          bottomInset: Math.round(viewportHeight - area.y - area.height),
+          centerOffset: Math.round(area.x - ((viewportWidth - area.width) / 2))
+        };
+      } else if (zone === 'side') {
+        acc.side = {
+          width: Math.round(area.width),
+          height: Math.round(area.height),
+          topOffset: Math.round(area.y),
+          rightInset: Math.round(viewportWidth - area.x - area.width)
+        };
+      } else if (zone === 'inline') {
+        acc.inline = {
+          widthRatio: Number((area.width / Math.max(articleBounds.width, 1)).toFixed(4)),
+          height: Math.round(area.height),
+          columnOffset: Math.round(area.x - articleBounds.left),
+          anchorOffset: inlineRect ? Math.round(area.y - inlineRect.top) : 112
+        };
+      }
+      return acc;
+    }, {});
+  }
+  function buildPublishedConfig(siteId) {
+    return {
+      version: 1,
+      siteId,
+      publishedAt: new Date().toISOString(),
+      runtime: {
+        placementPreset: state.placementPreset,
+        accent: state.accent,
+        visualMode: state.mode,
+        shapePreset: state.preset,
+        confidenceFloor: placementConfidenceFloor
+      },
+      placements: getPlacementLibrary(),
+      areaOverrides: serializePublishedAreas(),
+      installSnippet: getScriptInstallSnippet(siteId)
+    };
+  }
+  function getPublishSignature(config) {
+    if (!config) return '';
+    return JSON.stringify({
+      runtime: config.runtime,
+      placements: config.placements,
+      areaOverrides: config.areaOverrides
+    });
+  }
+  function updateInstallPanel() {
+    const siteId = getPublishSiteId();
+    const installSnippet = document.getElementById('installSnippet');
+    const verifyHostLink = document.getElementById('verifyHostLink');
+    const publishMeta = document.getElementById('publishMeta');
+    const publishState = document.getElementById('publishState');
+    const publishedConfig = getPublishedConfig(siteId);
+    const isCurrentLive = publishedConfig && getPublishSignature(publishedConfig) === getPublishSignature(buildPublishedConfig(siteId));
+    if (installSnippet) installSnippet.textContent = getScriptInstallSnippet(siteId);
+    if (verifyHostLink) verifyHostLink.href = `./verify-host.html?site=${encodeURIComponent(siteId)}`;
+    if (publishState) {
+      publishState.className = `publish-pill ${isCurrentLive ? 'live' : 'draft'}`;
+      publishState.textContent = isCurrentLive ? 'Published' : publishedConfig ? 'Changes pending' : 'Draft only';
+    }
+    if (publishMeta) {
+      publishMeta.textContent = isCurrentLive
+        ? `Live config for ${siteId} was published at ${new Date(publishedConfig.publishedAt).toLocaleString()}. Open the verification host to confirm the loader renders the current placements without touching markup.`
+        : publishedConfig
+          ? `There is already a live config for ${siteId}, but the editor has unpublished changes. Publish again to update the verification host.`
+        : `Publish saves the current placement preset and safe-zone geometry as the live runtime config for ${siteId}. The verification host loads that config through the same one-time install snippet a creator would place on their site.`;
+    }
+  }
+  function detectAnchors() {
+    const anchors = [];
+    const article = document.querySelector('.article');
+    const header = document.querySelector('.page-header');
+    if (article) {
+      anchors.push({
+        anchorId: 'anchor-footer-shell',
+        anchorType: 'footer',
+        zone: 'footer',
+        label: 'Footer safe zone',
+        confidence: window.innerWidth < 420 ? 0.86 : 0.96,
+        previewPosition: () => ({ top: window.innerHeight - 72, left: Math.max(24, (window.innerWidth * 0.5) - 84) })
+      });
+    }
+    if (header && getDeviceClass() === 'desktop') {
+      anchors.push({
+        anchorId: 'anchor-right-rail',
+        anchorType: 'floating-right',
+        zone: 'side',
+        label: 'Right rail anchor',
+        confidence: window.innerWidth >= 1180 ? 0.94 : 0.74,
+        previewPosition: () => ({ top: Math.max(108, window.innerHeight * 0.34), left: window.innerWidth - 208 })
+      });
+    }
+    const inlineTarget = getInlineTargetNode();
+    if (inlineTarget) {
+      const rect = inlineTarget.getBoundingClientRect();
+      anchors.push({
+        anchorId: 'anchor-inline-article-break',
+        anchorType: 'inline-article',
+        zone: 'inline',
+        label: 'Inline article break',
+        node: inlineTarget,
+        confidence: 0.78,
+        previewPosition: () => ({ top: Math.max(160, rect.top + 120), left: Math.max(32, rect.left) })
+      });
+    }
+    return anchors;
+  }
+  function buildEvaluationContext(anchor) {
+    return {
+      pageType: getPageType(),
+      deviceClass: getDeviceClass(),
+      previewMode: state.previewMode,
+      anchorId: anchor.anchorId,
+      anchorType: anchor.anchorType,
+      anchorConfidence: anchor.confidence
+    };
+  }
+  function matchesPageType(placement, context) { return !placement.pageTypes || placement.pageTypes.includes(context.pageType); }
+  function matchesDeviceTarget(placement, context) { return !placement.deviceTargets || placement.deviceTargets.includes(context.deviceClass); }
+  function evaluatePlacement(placement, anchor, context) {
+    if (!state.enabled) return { eligible: false, reasonCode: 'workspace_disabled' };
+    if (isDismissed(anchor.zone)) return { eligible: false, reasonCode: 'dismissed' };
+    if (!placement.enabled) return { eligible: false, reasonCode: 'placement_disabled' };
+    if (anchor.confidence < placementConfidenceFloor) return { eligible: false, reasonCode: 'anchor_low_confidence' };
+    if (placement.environment === 'preview' && !context.previewMode) return { eligible: false, reasonCode: 'preview_only' };
+    if (!matchesPageType(placement, context)) return { eligible: false, reasonCode: 'page_type_mismatch' };
+    if (!matchesDeviceTarget(placement, context)) return { eligible: false, reasonCode: 'device_mismatch' };
+    return { eligible: true, reasonCode: 'eligible' };
+  }
+  function resolvePlacementForAnchor(anchor, placements) {
+    const context = buildEvaluationContext(anchor);
+    const candidates = placements
+      .filter((placement) => placement.anchorType === anchor.anchorType)
+      .sort((a, b) => b.priority - a.priority);
+    for (const placement of candidates) {
+      const evaluation = evaluatePlacement(placement, anchor, context);
+      if (evaluation.eligible) {
+        return { render: true, zone: anchor.zone, anchor, context, placement, reasonCode: evaluation.reasonCode };
+      }
+    }
+    const firstCandidate = candidates[0] || null;
+    return {
+      render: false,
+      zone: anchor.zone,
+      anchor,
+      context,
+      placement: firstCandidate,
+      reasonCode: firstCandidate ? evaluatePlacement(firstCandidate, anchor, context).reasonCode : 'no_matching_placement'
+    };
+  }
+  function emitDecisionEvent(resolution) {
+    const detail = {
+      render: resolution.render,
+      zone: resolution.zone,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType,
+      reasonCode: resolution.reasonCode,
+      placementId: resolution.placement ? resolution.placement.placementId : null,
+      pageType: resolution.context.pageType,
+      deviceClass: resolution.context.deviceClass,
+      previewMode: resolution.context.previewMode,
+      timestamp: Date.now()
+    };
+    window.dispatchEvent(new CustomEvent('ff:ad:decision', { detail }));
+    if (!resolution.render) window.dispatchEvent(new CustomEvent('ff:ad:skip', { detail }));
+  }
+  function renderPlacementStatus(anchors, resolutions) {
+    const summary = document.getElementById('placementStatusSummary');
+    const grid = document.getElementById('placementStatusGrid');
+    if (!summary || !grid) return;
+    const pageType = getPageType();
+    const deviceClass = getDeviceClass();
+    const recommendedPreset = getPlacementRecommendation(pageType, deviceClass);
+    validateEditorAreas();
+    summary.innerHTML = `
+      <span class="placement-summary-pill">Page Type <strong>${pageType}</strong></span>
+      <span class="placement-summary-pill">Device <strong>${deviceClass}</strong></span>
+      <span class="placement-summary-pill">Recommended <strong>${recommendedPreset}</strong></span>
+      <span class="placement-summary-pill">Selected <strong>${state.placementPreset}</strong></span>
+      <span class="placement-summary-pill">Environment <strong>${state.previewMode ? 'preview' : 'live'}</strong></span>
+      <span class="placement-summary-pill">Mode <strong>${state.editorMode ? 'editor' : 'view'}</strong></span>
+    `;
+    grid.innerHTML = anchors.map((anchor) => {
+      const resolution = resolutions.find((item) => item.anchor.anchorId === anchor.anchorId);
+      const issue = (editorState.issues[anchor.zone] || [])[0] || '';
+      const placementId = resolution && resolution.placement ? resolution.placement.placementId : 'none';
+      return `
+      <article class="placement-card ${resolution && resolution.render ? 'rendering' : 'skipped'}">
+        <div class="placement-card-head">
+          <strong>${anchor.label}</strong>
+          <span class="placement-chip ${resolution && resolution.render ? 'live' : 'skip'}">${resolution && resolution.render ? 'rendering' : 'skipped'}</span>
+        </div>
+        <p><code>${anchor.anchorType}</code> · confidence ${(anchor.confidence * 100).toFixed(0)}%</p>
+        <p>Placement: <code>${placementId}</code></p>
+        <p>${describeReason(resolution ? resolution.reasonCode : 'no_matching_placement')}</p>
+        ${issue ? `<p>Editor guard rail: ${issue}</p>` : ''}
+      </article>
+    `;
+    }).join('');
+  }
+  function renderPreviewAnchors(anchors, resolutions) {
+    clearPreviewAnchors();
+    if (!state.previewMode) return;
+    const layer = document.createElement('div');
+    layer.id = 'anchorPreviewLayer';
+    layer.className = 'editor-layer';
+    anchors.forEach((anchor) => {
+      if (typeof anchor.previewPosition !== 'function') return;
+      const point = anchor.previewPosition();
+      const resolution = resolutions.find((item) => item.anchor.anchorId === anchor.anchorId);
+      const marker = document.createElement('div');
+      marker.className = `editor-note`;
+      marker.style.position = 'fixed';
+      marker.style.left = `${point.left}px`;
+      marker.style.top = `${point.top}px`;
+      marker.style.maxWidth = '240px';
+      marker.textContent = resolution && resolution.render
+        ? `${anchor.label} ready`
+        : `${anchor.label} ${describeReason(resolution ? resolution.reasonCode : 'no_matching_placement')}`;
+      layer.appendChild(marker);
+    });
+    document.body.appendChild(layer);
+  }
+  function renderEditorLayer() {
+    clearEditorLayer();
+    if (!state.editorMode) return;
+    validateEditorAreas();
+    const layer = document.createElement('div');
+    layer.id = 'editorLayer';
+    layer.className = 'editor-layer';
+    getManagedZones().forEach((zone) => {
+      const area = getEditorArea(zone);
+      if (!area) return;
+      const issue = (editorState.issues[zone] || [])[0] || '';
+      const el = document.createElement('div');
+      el.className = `editor-area${issue ? ' invalid' : ''}`;
+      el.dataset.zone = zone;
+      el.dataset.behavior = zone === 'footer' ? 'slide-x resize-width-height' : zone === 'side' ? 'slide-y resize-width-height' : 'slide-y resize-width-height';
+      el.style.left = `${area.x}px`; el.style.top = `${area.y}px`; el.style.width = `${area.width}px`; el.style.height = `${area.height}px`;
+      el.style.setProperty('--editor-media', zone === 'footer'
+        ? `linear-gradient(135deg, ${state.accent}, ${darken(state.accent,0.35)})`
+        : zone === 'side'
+          ? `linear-gradient(135deg, ${hexRgba(state.accent,0.9)}, ${darken(state.accent,0.45)})`
+          : `linear-gradient(135deg, ${darken(state.accent,0.82)}, ${darken(state.accent,0.45)})`);
+      el.innerHTML = `<div class="editor-media"></div><div class="editor-tint"></div><div class="editor-head"><span class="editor-badge">${zone} area</span><span class="editor-dims">${Math.round(area.width)}×${Math.round(area.height)}</span></div><div class="editor-note">${issue || (zone === 'footer' ? 'Slide horizontally along the bottom edge. Resize width and height within the footer safe zone.' : zone === 'side' ? 'Slide vertically on the right rail. Resize width and height while staying pinned to the screen edge.' : 'Slide vertically through the article flow. Resize within the article column guard rails.')}</div><div class="editor-handle" data-action="resize"></div>`;
+      layer.appendChild(el);
+    });
+    document.body.appendChild(layer);
+  }
+  function applyEditorInteraction(zone, origin, mode, dx, dy) {
+    const next = { ...origin };
+    if (zone === 'footer') {
+      if (mode === 'drag') {
+        next.x = origin.x + dx;
+        next.y = origin.y;
+      } else {
+        next.width = origin.width + dx;
+        next.height = origin.height + dy;
+        next.y = clampEditorArea(zone, { ...next, x: origin.x, y: origin.y }).y;
+      }
+    } else if (zone === 'side') {
+      if (mode === 'drag') {
+        next.x = origin.x;
+        next.y = origin.y + dy;
+      } else {
+        next.width = origin.width + dx;
+        next.height = origin.height + dy;
+        next.x = clampEditorArea(zone, { ...next, x: origin.x, y: origin.y }).x;
+      }
+    } else {
+      if (mode === 'drag') {
+        next.x = origin.x;
+        next.y = origin.y + dy;
+      } else {
+        next.width = origin.width + dx;
+        next.height = origin.height + dy;
+      }
+    }
+    return clampEditorArea(zone, next);
+  }
+  function startEditorInteraction(event) {
+    if (!state.editorMode) return;
+    const target = event.target.closest('.editor-area');
+    if (!target) return;
+    const zone = target.dataset.zone;
+    const area = getEditorArea(zone);
+    event.preventDefault();
+    editorState.interaction = { zone, mode: event.target.closest('.editor-handle') ? 'resize' : 'drag', startX: event.clientX, startY: event.clientY, origin: { ...area } };
+  }
+  function moveEditorInteraction(event) {
+    const active = editorState.interaction; if (!active) return;
+    const dx = event.clientX - active.startX, dy = event.clientY - active.startY;
+    editorState.areas[active.zone] = applyEditorInteraction(active.zone, active.origin, active.mode, dx, dy);
+    validateEditorAreas();
+    renderEditorLayer();
+  }
+  function stopEditorInteraction() { if (!editorState.interaction) return; editorState.interaction = null; validateEditorAreas(); renderEditorLayer(); }
 
   /* ══ ThumbHash decode — REQ-001/002 ══
    * Minimal ThumbHash decoder (base64 → RGBA → canvas → dataURL).
@@ -740,11 +1436,16 @@
   /* ══════════════════════════════════════════════════════════════
      SIDE PANEL — Right edge, breakout athlete, Nike-style
      ══════════════════════════════════════════════════════════════ */
-  function createSidePanel() {
-    if (isDismissed('side')) return null;
+  function createSidePanel(resolution) {
+    if (!resolution || !resolution.render || isDismissed('side')) return null;
     const host = document.createElement('div');
     host.id = 'ff-side-host';
-    host.style.cssText = 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;contain:layout style;';
+    const area = getRenderableArea('side');
+    const expandedWidth = area ? Math.max(340, area.width) : 340;
+    const hostLeft = area ? area.x + area.width - expandedWidth : window.innerWidth - expandedWidth;
+    host.style.cssText = area
+      ? `position:fixed;top:${area.y}px;left:${hostLeft}px;width:${expandedWidth}px;height:${area.height}px;z-index:2147483647;pointer-events:none;contain:layout style;`
+      : 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;contain:layout style;';
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({ mode: 'closed' });
     const A = state.accent, G = state.mode === 'glass';
@@ -755,13 +1456,13 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         .panel {
-          position: fixed; top: 50%; right: -6px; transform: translateY(-50%);
-          width: 82px; height: 440px;
+          position: ${area ? 'absolute' : 'fixed'}; top: ${area ? '0' : '50%'}; right: ${area ? '0' : '-6px'}; left:${area ? 'auto' : 'auto'}; transform: ${area ? 'none' : 'translateY(-50%)'};
+          width: ${area ? `${Math.max(286, area.width)}px` : '82px'}; height: ${area ? `${Math.max(360, area.height)}px` : '440px'};
           pointer-events: auto; cursor: pointer;
           transition: width 0.45s cubic-bezier(0.16,1,0.3,1), right 0.45s cubic-bezier(0.16,1,0.3,1);
           overflow: visible; z-index: 2147483647;
         }
-        .panel:hover, .panel.expanded { width: 340px; right: 0; }
+        .panel:hover, .panel.expanded { width: ${area ? `${expandedWidth}px` : '340px'}; right: 0; }
 
         /* Angled shell — diagonal left edge */
         .shell {
@@ -898,7 +1599,7 @@
         .x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
         @keyframes enterRight { from { transform: translateY(-50%) translateX(100%); opacity: 0; } to { transform: translateY(-50%); opacity: 1; } }
-        .panel { animation: enterRight 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+        .panel { animation: ${area ? 'none' : 'enterRight 0.4s cubic-bezier(0.16,1,0.3,1) both'}; }
         @media (prefers-reduced-motion: reduce) { .panel { animation: none; } *, *::before, *::after { transition: none !important; animation: none !important; } }
       </style>
 
@@ -982,7 +1683,7 @@
 
     shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'side', preset: state.preset, mode: state.mode }));
     shadow.querySelector('.x').addEventListener('click', () => {
-      panel.style.transform = 'translateY(-50%) translateX(120%)'; panel.style.opacity = '0';
+      panel.style.transform = area ? 'translateX(120%)' : 'translateY(-50%) translateX(120%)'; panel.style.opacity = '0';
       setTimeout(() => host.remove(), 400);
       setDismissed('side'); logEvent('ff:ad:dismiss', { zone: 'side' });
     });
@@ -996,11 +1697,14 @@
   /* ══════════════════════════════════════════════════════════════
      FOOTER BANNER — Full-bleed, breakout product, non-rectangular
      ══════════════════════════════════════════════════════════════ */
-  function createFooterBanner() {
-    if (isDismissed('footer')) return null;
+  function createFooterBanner(resolution) {
+    if (!resolution || !resolution.render || isDismissed('footer')) return null;
     const host = document.createElement('div');
     host.id = 'ff-footer-host';
-    host.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;contain:layout style;';
+    const area = getRenderableArea('footer');
+    host.style.cssText = area
+      ? `position:fixed;top:${area.y}px;left:${area.x}px;width:${area.width}px;height:${area.height}px;z-index:2147483646;pointer-events:none;contain:layout style;`
+      : 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;contain:layout style;';
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({ mode: 'closed' });
     const A = state.accent, G = state.mode === 'glass', P = state.preset;
@@ -1020,8 +1724,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         .banner {
-          position: fixed; bottom: 0; left: 0; right: 0;
-          height: 150px;
+          position: ${area ? 'absolute' : 'fixed'}; bottom: ${area ? 'auto' : '0'}; top:${area ? '0' : 'auto'}; left: 0; right: ${area ? 'auto' : '0'};
+          width:${area ? `${area.width}px` : 'auto'}; height: ${area ? `${Math.max(132, area.height)}px` : '150px'};
           pointer-events: auto; overflow: visible;
           z-index: 2147483646;
         }
@@ -1243,13 +1947,185 @@
     return host;
   }
 
+  function createInlineBanner(resolution) {
+    if (!resolution || !resolution.render || !resolution.anchor.node || !resolution.anchor.node.parentNode) return null;
+    const existing = document.getElementById('ff-inline-host');
+    if (existing) existing.remove();
+
+    const host = document.createElement('div');
+    host.id = 'ff-inline-host';
+    const area = getRenderableArea('inline');
+    const articleBounds = getArticleBounds();
+    const inlineWidth = area ? Math.min(articleBounds.width, area.width) : articleBounds.width;
+    const inlineOffset = area ? Math.max(0, area.x - articleBounds.left) : 0;
+    host.style.cssText = `margin: 24px 0; width:${inlineWidth}px; max-width:100%; transform:translateX(${inlineOffset}px);`;
+
+    const shadow = host.attachShadow({ mode: 'open' });
+    const accent = state.accent;
+    const accent2 = darken(accent, 0.42);
+    const isGlass = state.mode === 'glass';
+    shadow.innerHTML = `
+      <style>
+        :host { display: block; }
+        .inline-banner {
+          position: relative;
+          overflow: hidden;
+          border-radius: 18px;
+          padding: 16px 18px;
+          color: #fff;
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+          ${isGlass
+            ? `background: rgba(15,23,42,0.68); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.14);`
+            : `background: linear-gradient(135deg, ${accent}, ${accent2}); border: 1px solid rgba(255,255,255,0.08);`
+          }
+          box-shadow: 0 18px 48px rgba(15,23,42,0.16);
+        }
+        .inline-banner::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(115deg, rgba(255,255,255,0.12), transparent 44%);
+          pointer-events: none;
+        }
+        .inline-layout {
+          position: relative;
+          z-index: 1;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 16px;
+          align-items: center;
+        }
+        .inline-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          margin-bottom: 8px;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.72);
+        }
+        .inline-label::before {
+          content: '';
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: ${accent};
+          box-shadow: 0 0 0 4px ${hexRgba(accent, 0.14)};
+        }
+        .inline-title {
+          display: block;
+          font-size: 20px;
+          font-weight: 800;
+          line-height: 1.15;
+          letter-spacing: -0.03em;
+          margin-bottom: 6px;
+        }
+        .inline-copy {
+          display: block;
+          font-size: 13px;
+          line-height: 1.5;
+          color: rgba(255,255,255,0.76);
+          max-width: 46ch;
+        }
+        .inline-actions {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 10px;
+        }
+        .inline-chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 44px;
+          min-height: 44px;
+          padding: 0 16px;
+          border-radius: 999px;
+          border: none;
+          background: #fff;
+          color: #0f172a;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .inline-meta {
+          font-size: 10px;
+          color: rgba(255,255,255,0.62);
+        }
+        @media (max-width: 720px) {
+          .inline-layout { grid-template-columns: 1fr; }
+          .inline-actions { align-items: flex-start; }
+        }
+      </style>
+      <section class="inline-banner" role="complementary" aria-label="Advertisement">
+        <div class="inline-layout">
+          <div>
+            <span class="inline-label">Sponsored Placement</span>
+            <span class="inline-title">Deploy AI agents without rebuilding your stack</span>
+            <span class="inline-copy">This inline placement is chosen automatically by the runtime when article-safe anchors and device rules match. Creators don’t edit markup to place it.</span>
+          </div>
+          <div class="inline-actions">
+            <button class="inline-chip" type="button">See Demo</button>
+            <span class="inline-meta">${resolution.placement ? resolution.placement.placementId : 'inline-placement'}</span>
+          </div>
+        </div>
+      </section>`;
+
+    const banner = shadow.querySelector('.inline-banner');
+    banner.querySelector('.inline-chip').addEventListener('click', () => logEvent('ff:ad:click', {
+      zone: 'inline',
+      placementId: resolution.placement ? resolution.placement.placementId : null,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    }));
+
+    resolution.anchor.node.insertAdjacentElement('afterend', host);
+    logEvent('ff:ad:loaded', {
+      zone: 'inline',
+      placementId: resolution.placement ? resolution.placement.placementId : null,
+      anchorId: resolution.anchor.anchorId
+    });
+    setTimeout(() => {
+      const current = document.getElementById('ff-inline-host');
+      if (current && current.isConnected) {
+        logEvent('ff:ad:impression', {
+          zone: 'inline',
+          placementId: resolution.placement ? resolution.placement.placementId : null,
+          anchorId: resolution.anchor.anchorId
+        });
+      }
+    }, 600);
+    return host;
+  }
+
   /* ══ RENDER ══ */
   function render() {
+    rebuildQueued = false;
+    updateInstallPanel();
     document.getElementById('ff-side-host')?.remove();
     document.getElementById('ff-footer-host')?.remove();
-    if (!state.enabled) return;
-    createSidePanel();
-    createFooterBanner();
+    document.getElementById('ff-inline-host')?.remove();
+    clearEditorLayer();
+    clearPreviewAnchors();
+    ensureEditorAreas();
+    const anchors = detectAnchors();
+    const placements = getPlacementLibrary();
+    const resolutions = anchors.map((anchor) => resolvePlacementForAnchor(anchor, placements));
+    validateEditorAreas();
+    resolutions.forEach(emitDecisionEvent);
+    renderPlacementStatus(anchors, resolutions);
+    renderPreviewAnchors(anchors, resolutions);
+    renderEditorLayer();
+
+    const footerResolution = resolutions.find((item) => item.zone === 'footer');
+    const sideResolution = resolutions.find((item) => item.zone === 'side');
+    const inlineResolution = resolutions.find((item) => item.zone === 'inline');
+
+    if (footerResolution && footerResolution.render) createFooterBanner(footerResolution);
+    if (sideResolution && sideResolution.render) createSidePanel(sideResolution);
+    if (inlineResolution && inlineResolution.render) createInlineBanner(inlineResolution);
   }
 
   /* ══ CONFIG WIRING ══ */
@@ -1263,7 +2139,57 @@
   wire('modeToggle', v => { state.mode = v; render(); });
   wire('presetToggle', v => { state.preset = v; render(); });
   wire('adToggle', v => { state.enabled = v === 'on'; render(); });
+  document.getElementById('placementPreset').addEventListener('change', e => { state.placementPreset = e.target.value; render(); });
+  document.getElementById('previewToggle').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    document.getElementById('previewToggle').querySelectorAll('button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.previewMode = b.dataset.preview === 'true';
+    render();
+  }));
+  document.getElementById('editorToggle').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const nextEditorMode = b.dataset.editor === 'true';
+    if (!nextEditorMode && state.editorMode && !validateEditorAreas().isValid) {
+      window.alert('Editor cannot close while placement areas are invalid. Use Reset Template or drag/resize the highlighted areas back into a safe state.');
+      return;
+    }
+    document.getElementById('editorToggle').querySelectorAll('button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.editorMode = nextEditorMode;
+    ensureEditorAreas();
+    render();
+  }));
+  document.getElementById('editorTemplate').addEventListener('change', e => { state.editorTemplate = e.target.value; resetEditorAreas(state.editorTemplate); render(); });
+  document.getElementById('resetTemplate').addEventListener('click', () => { resetEditorAreas(state.editorTemplate); render(); });
   document.getElementById('accentPicker').addEventListener('input', e => { state.accent = e.target.value; document.documentElement.style.setProperty('--accent', e.target.value); render(); });
+  document.getElementById('publishSiteId').addEventListener('input', updateInstallPanel);
+  document.getElementById('publishConfig').addEventListener('click', async () => {
+    const validation = validateEditorAreas();
+    if (!validation.isValid) {
+      window.alert('Fix the highlighted placement areas before publishing. The live runtime config only accepts compliant safe zones.');
+      render();
+      return;
+    }
+    const siteId = getPublishSiteId();
+    const payload = buildPublishedConfig(siteId);
+    try {
+      const serialized = JSON.stringify(payload);
+      if (window.location.protocol.startsWith('http')) {
+        const response = await fetch(`/api/publish/${encodeURIComponent(siteId)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: serialized
+        });
+        if (!response.ok) throw new Error(`Publish endpoint failed: ${response.status}`);
+        localStorage.setItem(getPublishedConfigKey(siteId), serialized);
+      } else {
+        localStorage.setItem(getPublishedConfigKey(siteId), serialized);
+      }
+      updateInstallPanel();
+      logEvent('ff:ad:publish', { zone: 'workspace', siteId, placementPreset: state.placementPreset });
+    } catch {
+      window.alert('Publishing failed. When served through the verification server this writes to the local published-config endpoint; otherwise it falls back to browser storage only.');
+    }
+  });
   document.getElementById('resetDismiss').addEventListener('click', () => {
     try { localStorage.removeItem('ff_ad_dismissed_footer'); localStorage.removeItem('ff_ad_dismissed_side'); } catch {}
     state.dismissed = { footer: false, side: false }; render();
@@ -1272,6 +2198,14 @@
   /* ══ IMAGE OPTIMISER WIRING ══ */
   document.getElementById('optimiserToggle').addEventListener('click', function() {
     document.getElementById('imgOptimiser').classList.toggle('open');
+  });
+  document.addEventListener('mousedown', startEditorInteraction);
+  document.addEventListener('mousemove', moveEditorInteraction);
+  document.addEventListener('mouseup', stopEditorInteraction);
+  window.addEventListener('resize', function() {
+    if (rebuildQueued) return;
+    rebuildQueued = true;
+    window.requestAnimationFrame(render);
   });
 
   document.getElementById('imgUpload').addEventListener('change', function(e) {
@@ -1302,6 +2236,7 @@
     img.src = url;
   });
 
+  updateInstallPanel();
   render();
 })();
 </script>

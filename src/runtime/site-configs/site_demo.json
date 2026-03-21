@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "siteId": "site_demo",
+  "publishedAt": "2026-03-21T21:55:00.000Z",
+  "runtime": {
+    "placementPreset": "autopilot",
+    "accent": "#ff3b30",
+    "visualMode": "solid",
+    "shapePreset": "capsule",
+    "confidenceFloor": 0.7
+  },
+  "placements": [
+    {
+      "enabled": true,
+      "environment": "live",
+      "placementId": "placement-footer-primary",
+      "anchorType": "footer",
+      "deviceTargets": ["desktop", "tablet", "mobile"],
+      "priority": 20
+    },
+    {
+      "enabled": true,
+      "environment": "live",
+      "placementId": "placement-side-primary",
+      "anchorType": "floating-right",
+      "pageTypes": ["article", "landing"],
+      "deviceTargets": ["desktop"],
+      "priority": 10
+    },
+    {
+      "enabled": true,
+      "environment": "live",
+      "placementId": "placement-inline-secondary",
+      "anchorType": "inline-article",
+      "pageTypes": ["article"],
+      "deviceTargets": ["mobile", "tablet"],
+      "priority": 18
+    }
+  ],
+  "areaOverrides": {
+    "footer": {
+      "widthRatio": 0.88,
+      "height": 148,
+      "bottomInset": 8,
+      "centerOffset": 0
+    },
+    "side": {
+      "width": 300,
+      "height": 400,
+      "topOffset": 112,
+      "rightInset": 8
+    },
+    "inline": {
+      "widthRatio": 0.92,
+      "height": 168,
+      "columnOffset": 0,
+      "anchorOffset": 112
+    }
+  },
+  "installSnippet": "<script>window.FF_AD_SITE = \"site_demo\";</script>\n<script async src=\"/runtime/ad-placement-loader.js\" data-config=\"/api/published/site_demo.json\"></script>"
+}
