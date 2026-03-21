@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verification Host</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, 'Times New Roman', serif; background: #faf7f2; color: #1f2937; }
+  .site-shell { min-height: 100vh; }
+  .site-header {
+    padding: 18px 28px; background: #111827; color: #f9fafb;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .site-header strong { font: 800 22px/1 -apple-system, BlinkMacSystemFont, sans-serif; }
+  .site-header nav { display: flex; gap: 14px; font: 600 12px/1 -apple-system, BlinkMacSystemFont, sans-serif; }
+  .site-header nav span { color: rgba(255,255,255,0.72); }
+  .host-note {
+    margin: 18px auto 0; max-width: 920px; padding: 12px 16px;
+    border-radius: 14px; background: rgba(255,255,255,0.86); border: 1px solid rgba(15,23,42,0.08);
+    font: 500 13px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; color: #475569;
+  }
+  article {
+    max-width: 720px; margin: 0 auto; padding: 32px 24px 260px;
+  }
+  h1 { font-size: 42px; line-height: 1.04; margin-bottom: 14px; letter-spacing: -0.04em; }
+  .meta { font: 600 12px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; color: #64748b; margin-bottom: 22px; }
+  p { font-size: 18px; line-height: 1.8; margin-bottom: 18px; color: #334155; }
+  .hero {
+    margin: 26px 0; border-radius: 22px; height: 320px;
+    background: linear-gradient(135deg, #111827, #1d4ed8 48%, #0f172a);
+    box-shadow: 0 24px 48px rgba(15,23,42,0.18);
+  }
+  blockquote {
+    margin: 24px 0; padding: 18px 20px; border-left: 4px solid #ef4444;
+    background: rgba(255,255,255,0.78); border-radius: 0 16px 16px 0; color: #475569;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <strong>Creator Weekly</strong>
+      <nav>
+        <span>Features</span>
+        <span>Creators</span>
+        <span>Growth</span>
+      </nav>
+    </header>
+
+    <div class="host-note" id="hostNote"></div>
+
+    <article>
+      <h1>How editorial teams are using automation without breaking their publishing stack</h1>
+      <div class="meta">Verification host fixture · Article layout · Safe for loader testing</div>
+      <p>Modern publishing teams want monetisation that feels native, performs predictably, and does not require engineers to keep reworking templates every time a campaign changes. That means the install contract has to be stable, minimal, and platform-managed.</p>
+      <p>The goal of this verification page is simple: simulate what a creator-owned site looks like once the one-time install snippet is in place. The banner runtime should detect safe anchors, resolve published placements, and inject the experiences without disturbing the document structure.</p>
+      <div class="hero"></div>
+      <p>In a production product, the live configuration would come from the platform. For this prototype, the verification host can load from a local published config or from the draft page’s local storage publication flow, which makes end-to-end persistence visible during testing.</p>
+      <blockquote>Verification should prove two things: the banners persist outside the editor page, and the host layout remains stable when placements render or safely no-render.</blockquote>
+      <p>If the editor publishes an updated runtime config for this site ID, refreshing this page should reflect the new layout decisions. That gives us a realistic stand-in for the publish-to-live path we eventually want behind a hosted API.</p>
+      <p>The inline placement should appear after this paragraph when the placement rules allow it. The side rail should only appear on desktop. The footer should remain the universal fallback for live published traffic.</p>
+      <p>That combination lets us test device gating, article-aware insertion, and fixed-edge placement without asking a content creator to add custom selectors or banner markup to the page.</p>
+    </article>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const siteId = params.get('site') || 'site_demo';
+    window.FF_AD_SITE = siteId;
+    document.getElementById('hostNote').textContent = `Verification host is running with site ID "${siteId}". Publish a runtime config from index.html, then reload this page to verify persistence through the install snippet.`;
+  </script>
+  <script async src="/runtime/ad-placement-loader.js" data-config=""></script>
+</body>
+</html>
