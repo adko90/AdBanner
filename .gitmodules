@@ -1,0 +1,3 @@
+[submodule "agent-workflow-kit"]
+	path = agent-workflow-kit
+	url = https://github.com/adko90/agent-workflow-kit.git

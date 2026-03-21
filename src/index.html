@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Interactive Ad System — MVP Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --panel-bg: #f5f5f7;
+    --panel-border: #d2d2d7;
+    --panel-text: #1d1d1f;
+    --panel-muted: #86868b;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    background: #f2f2f7;
+    min-height: 300vh;
+    color: var(--panel-text);
+  }
+
+  /* ── Builder Config Panel ── */
+  .config-panel {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(245,245,247,0.92);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 10px 16px;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  }
+  .config-panel h1 { font-size: 12px; font-weight: 600; color: var(--panel-muted); }
+  .config-group { display: flex; align-items: center; gap: 4px; }
+  .config-group select { font-size: 11px; padding: 3px 6px; border: 1px solid var(--panel-border); border-radius: 5px; background: #fff; font-family: inherit; cursor: pointer; }
+  .config-group input[type="color"] { width: 24px; height: 20px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
+  .tg { display: flex; gap: 1px; background: #e8e8ed; border-radius: 5px; padding: 2px; }
+  .tg button { font-size: 10px; font-weight: 500; padding: 3px 8px; border: none; border-radius: 3px; background: transparent; color: var(--panel-muted); cursor: pointer; font-family: inherit; transition: all 0.12s; }
+  .tg button.active { background: #fff; color: var(--panel-text); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .btn-sm { font-size: 10px; padding: 3px 8px; border: 1px solid var(--panel-border); border-radius: 5px; background: #fff; cursor: pointer; font-family: inherit; color: var(--panel-muted); }
+
+  /* ── Publisher page ── */
+  .page-header { background: #1a1a1a; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .page-header .logo { font-size: 22px; font-weight: 900; color: #0a0; letter-spacing: -1px; }
+  .page-header nav { display: flex; gap: 14px; }
+  .page-header nav a { color: #aaa; text-decoration: none; font-size: 12px; font-weight: 500; }
+  .article { max-width: 660px; margin: 0 auto; padding: 28px 24px 200px; }
+  .article h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin-bottom: 10px; color: #1a1a1a; }
+  .article .meta { font-size: 12px; color: #888; margin-bottom: 18px; }
+  .article .meta a { color: #0a0; text-decoration: none; }
+  .article p { font-size: 16px; line-height: 1.7; color: #333; margin-bottom: 18px; }
+  .article blockquote { border-left: 3px solid #0a0; padding: 10px 18px; margin: 20px 0; font-style: italic; color: #555; background: #f8f8f8; border-radius: 0 6px 6px 0; }
+  .hero-img { width: 100%; height: 200px; border-radius: 8px; background: linear-gradient(135deg, #667eea, #764ba2); margin-bottom: 18px; }
+
+  /* ── Event log ── */
+  .event-log {
+    position: fixed; top: 48px; left: 8px; width: 200px; max-height: 140px;
+    overflow-y: auto; background: rgba(0,0,0,0.82); color: #0f0;
+    font-family: 'SF Mono', Monaco, monospace; font-size: 9px;
+    padding: 5px; border-radius: 5px; z-index: 101; pointer-events: none; opacity: 0.6;
+  }
+  .event-log div { padding: 1px 0; }
+</style>
+</head>
+<body>
+
+<!-- ── Config Panel ── -->
+<div class="config-panel">
+  <h1>Ad Builder</h1>
+  <div class="config-group">
+    <select id="presetSelect">
+      <option value="capsule">Capsule</option>
+      <option value="angled">Angled</option>
+      <option value="signature">Signature</option>
+    </select>
+  </div>
+  <div class="config-group">
+    <div class="tg" id="modeToggle">
+      <button data-mode="solid">Solid</button>
+      <button data-mode="glass" class="active">Glass</button>
+    </div>
+  </div>
+  <div class="config-group">
+    <input type="color" id="accentColor" value="#6C5CE7">
+  </div>
+  <div class="config-group">
+    <div class="tg" id="enableToggle">
+      <button data-enabled="true" class="active">On</button>
+      <button data-enabled="false">Off</button>
+    </div>
+  </div>
+  <button class="btn-sm" id="resetDismiss">Reset All</button>
+</div>
+
+<div class="event-log" id="eventLog"></div>
+
+<!-- ── Publisher Page ── -->
+<div class="page-header">
+  <div class="logo">TC</div>
+  <nav><a href="#">AI</a><a href="#">Startups</a><a href="#">Venture</a><a href="#">Security</a></nav>
+</div>
+
+<article class="article">
+  <h1>Building Enterprise AI Agent Platforms Has Become the Industry's Obsession</h1>
+  <div class="meta">By <a href="#">Sarah Chen</a> &middot; March 21, 2026 &middot; 6 min read</div>
+  <div class="hero-img"></div>
+  <p>Building enterprise AI agent platforms has become the du jour obsession of the AI space in recent months. Every major cloud provider, from Microsoft to Google to AWS, is racing to build the definitive platform for enterprises to deploy autonomous agents.</p>
+  <p>OpenAI launched Frontier, its open platform for enterprises to build and manage AI agents, in February. In December, global research firm Gartner released a report about how governance platforms for AI agents would be the crucial infrastructure needed for enterprises to adopt the tech.</p>
+  <blockquote>"OpenClaw gave us, gave the industry exactly what it needed at exactly the time it needed it."</blockquote>
+  <p>The market for AI agent platforms is expected to reach $47 billion by 2028, according to recent estimates. This growth is driven by enterprises seeking to automate complex workflows that previously required human decision-making.</p>
+  <p>Nvidia clearly got the message. The chipmaker announced its own agent development kit at GTC last week, positioning itself not just as a hardware provider but as a full-stack AI platform company.</p>
+  <p>The implications for the enterprise software market are profound. Traditional SaaS vendors are scrambling to add agent capabilities to their existing platforms, while startups are building agent-first architectures from the ground up.</p>
+  <p>Security remains the biggest concern. When autonomous agents can access company data, make API calls, and trigger workflows, the attack surface expands dramatically. Several startups are already building "agent firewalls" — middleware that monitors and controls agent behavior in real-time.</p>
+  <p>The race is on, and the next 18 months will determine which platforms become the foundational infrastructure for the agent era.</p>
+</article>
+
+<script>
+(function() {
+  'use strict';
+
+  const CONFIG = {
+    preset: 'capsule',
+    mode: 'glass',
+    accent: '#6C5CE7',
+    enabled: true,
+    dismissKey: 'ff_dismissed_',
+    dismissCooldown: 24 * 60 * 60 * 1000
+  };
+
+  // ── QR Code Generator (lightweight, no dependency) ──
+  // Generates a simple QR-like SVG pattern. For production, use a real QR lib.
+  function generateQR(data, size) {
+    // Create a deterministic pattern from the data string
+    const cells = 21;
+    const cellSize = size / cells;
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) { hash = ((hash << 5) - hash + data.charCodeAt(i)) | 0; }
+
+    let rects = '';
+    const seed = Math.abs(hash);
+
+    // Fixed finder patterns (top-left, top-right, bottom-left)
+    const drawFinder = (ox, oy) => {
+      for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) {
+        const on = r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
+        if (on) rects += `<rect x="${(ox+c)*cellSize}" y="${(oy+r)*cellSize}" width="${cellSize}" height="${cellSize}" fill="white"/>`;
+      }
+    };
+    drawFinder(0, 0);
+    drawFinder(cells - 7, 0);
+    drawFinder(0, cells - 7);
+
+    // Data modules (pseudo-random from hash)
+    let s = seed;
+    for (let r = 0; r < cells; r++) for (let c = 0; c < cells; c++) {
+      // Skip finder areas
+      if ((r < 8 && c < 8) || (r < 8 && c > cells-9) || (r > cells-9 && c < 8)) continue;
+      s = (s * 16807 + 1) & 0x7FFFFFFF;
+      if (s % 3 !== 0) {
+        rects += `<rect x="${c*cellSize}" y="${r*cellSize}" width="${cellSize}" height="${cellSize}" fill="white" rx="0.3"/>`;
+      }
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><rect width="${size}" height="${size}" fill="transparent" rx="4"/>${rects}</svg>`;
+  }
+
+  // ── Events ──
+  function emitEvent(name, zone, detail) {
+    const payload = { zone, presetId: CONFIG.preset, mode: CONFIG.mode, timestamp: Date.now(), ...detail };
+    window.dispatchEvent(new CustomEvent(`ff:ad:${name}`, { detail: payload }));
+    logEvent(`${zone}:${name}`);
+  }
+
+  function logEvent(name) {
+    const log = document.getElementById('eventLog');
+    if (!log) return;
+    const entry = document.createElement('div');
+    const t = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    entry.textContent = `${t} ${name}`;
+    log.prepend(entry);
+    while (log.children.length > 15) log.removeChild(log.lastChild);
+  }
+
+  // ── Dismiss ──
+  function isDismissed(zone) {
+    try { const r = localStorage.getItem(CONFIG.dismissKey + zone); return r && (Date.now() - parseInt(r,10)) < CONFIG.dismissCooldown; } catch { return false; }
+  }
+  function setDismissed(zone) {
+    try { localStorage.setItem(CONFIG.dismissKey + zone, Date.now().toString()); } catch {}
+  }
+  function clearAll() {
+    try { localStorage.removeItem(CONFIG.dismissKey + 'footer'); localStorage.removeItem(CONFIG.dismissKey + 'side'); } catch {}
+  }
+
+  // ── Color helpers ──
+  function adjustColor(hex, amt) {
+    const n = parseInt(hex.replace('#',''), 16);
+    const r = Math.min(255, Math.max(0, (n >> 16) + amt));
+    const g = Math.min(255, Math.max(0, ((n >> 8) & 0xFF) + amt));
+    const b = Math.min(255, Math.max(0, (n & 0xFF) + amt));
+    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  //  SIDE PANEL AD (right edge, interactive, layered)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  let sideHost = null;
+
+  function createSidePanel() {
+    if (sideHost) { sideHost.remove(); sideHost = null; }
+    if (!CONFIG.enabled || isDismissed('side')) return;
+
+    sideHost = document.createElement('div');
+    sideHost.id = 'ff-side-host';
+    sideHost.style.cssText = `position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:2147483646; pointer-events:none;`;
+
+    const shadow = sideHost.attachShadow({ mode: 'open' });
+    const accent = CONFIG.accent;
+    const accent2 = adjustColor(accent, -40);
+    const isGlass = CONFIG.mode === 'glass';
+
+    const style = document.createElement('style');
+    style.textContent = `
+      :host { display: block; }
+
+      .side-panel {
+        pointer-events: auto;
+        width: 72px;
+        transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        border-radius: 16px 0 0 16px;
+        ${isGlass
+          ? `background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%); border: 1px solid rgba(255,255,255,0.12); border-right: none;`
+          : `background: #1c1c1e; border: 1px solid rgba(255,255,255,0.06); border-right: none;`
+        }
+        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      }
+
+      .side-panel:hover, .side-panel.expanded {
+        width: 280px;
+        box-shadow: -8px 0 40px rgba(0,0,0,0.3);
+      }
+
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to   { transform: translateX(0);    opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0);    opacity: 1; }
+        to   { transform: translateX(100%); opacity: 0; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .side-panel { animation: none !important; opacity: 1; transform: none; }
+      }
+
+      @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+        .side-panel { background: rgba(28,28,30,0.96) !important; }
+      }
+
+      .side-inner {
+        width: 280px;
+        min-height: 340px;
+        display: flex;
+        flex-direction: column;
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        position: relative;
+      }
+
+      /* ── Parallax hero image area ── */
+      .hero {
+        position: relative;
+        height: 160px;
+        overflow: hidden;
+        border-radius: 14px 0 0 0;
+      }
+
+      .hero-layer {
+        position: absolute;
+        inset: 0;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform;
+      }
+
+      /* Background layer */
+      .hero-bg {
+        background: linear-gradient(145deg, ${accent}, ${accent2});
+        z-index: 0;
+      }
+
+      /* Mid layer — floating shapes */
+      .hero-mid {
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hero-mid svg { opacity: 0.25; }
+
+      /* Front layer — product "leaping out" */
+      .hero-front {
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .product-img {
+        width: 100px;
+        height: 100px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.2);
+        border: 2px solid rgba(255,255,255,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        transform: translateY(0) scale(1);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+      }
+      .side-panel:hover .product-img,
+      .side-panel.expanded .product-img {
+        transform: translateY(-8px) scale(1.08);
+      }
+
+      /* Shimmer glow on hover */
+      .hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 80%, rgba(255,255,255,0.15), transparent 60%);
+        opacity: 0;
+        transition: opacity 0.4s;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .side-panel:hover .hero::after,
+      .side-panel.expanded .hero::after { opacity: 1; }
+
+      /* ── Collapsed tab (visible when narrow) ── */
+      .tab {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 72px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        z-index: 10;
+        transition: opacity 0.2s;
+      }
+      .side-panel:hover .tab,
+      .side-panel.expanded .tab { opacity: 0; pointer-events: none; }
+
+      .tab-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, ${accent}, ${accent2});
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      }
+      .tab-text {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.6);
+      }
+
+      /* ── Content (visible on expand) ── */
+      .side-content {
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        opacity: 0;
+        transition: opacity 0.25s 0.1s;
+      }
+      .side-panel:hover .side-content,
+      .side-panel.expanded .side-content { opacity: 1; }
+
+      .side-label {
+        font-size: 9px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: rgba(255,255,255,0.4);
+      }
+      .side-title {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.25;
+        letter-spacing: -0.2px;
+      }
+      .side-desc {
+        font-size: 12px;
+        line-height: 1.4;
+        color: rgba(255,255,255,0.6);
+      }
+
+      /* ── Hover-to-reveal details ── */
+      .reveal {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .side-panel:hover .reveal,
+      .side-panel.expanded .reveal { max-height: 120px; }
+
+      .reveal-inner {
+        padding-top: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .reveal-stats {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .stat {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+      .stat-label { color: rgba(255,255,255,0.45); }
+      .stat-value { font-weight: 600; color: ${accent}; }
+
+      /* ── QR Code ── */
+      .qr-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        flex-shrink: 0;
+      }
+      .qr-code {
+        width: 56px;
+        height: 56px;
+        padding: 4px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .qr-code svg { width: 100%; height: 100%; }
+      .qr-label {
+        font-size: 7px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: rgba(255,255,255,0.35);
+        text-align: center;
+      }
+
+      /* ── CTA ── */
+      .side-cta {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background: ${accent};
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .side-cta:hover { transform: scale(1.02); }
+      .side-cta:active { transform: scale(0.98); }
+      .side-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+      /* ── Dismiss ── */
+      .side-dismiss {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.35);
+        color: rgba(255,255,255,0.6);
+        font-size: 12px;
+        cursor: pointer;
+        z-index: 20;
+        opacity: 0;
+        transition: opacity 0.2s;
+        padding: 0;
+        margin: 0;
+      }
+      .side-panel:hover .side-dismiss,
+      .side-panel.expanded .side-dismiss { opacity: 1; }
+      .side-dismiss:hover { background: rgba(0,0,0,0.55); color: #fff; }
+      .side-dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+      .ad-info {
+        position: absolute;
+        top: 8px;
+        right: 36px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 20;
+      }
+      .side-panel:hover .ad-info,
+      .side-panel.expanded .ad-info { opacity: 0.4; }
+      .ad-info svg { width: 14px; height: 14px; }
+    `;
+    shadow.appendChild(style);
+
+    // ── DOM ──
+    const panel = document.createElement('div');
+    panel.className = 'side-panel';
+    panel.setAttribute('role', 'complementary');
+    panel.setAttribute('aria-label', 'Advertisement');
+
+    const inner = document.createElement('div');
+    inner.className = 'side-inner';
+
+    // Parallax hero
+    const hero = document.createElement('div');
+    hero.className = 'hero';
+
+    const bgLayer = document.createElement('div');
+    bgLayer.className = 'hero-layer hero-bg';
+
+    const midLayer = document.createElement('div');
+    midLayer.className = 'hero-layer hero-mid';
+    midLayer.innerHTML = `<svg width="200" height="160" viewBox="0 0 200 160"><circle cx="40" cy="120" r="60" fill="white" opacity="0.08"/><circle cx="170" cy="30" r="45" fill="white" opacity="0.06"/><rect x="80" y="70" width="80" height="80" rx="20" fill="white" opacity="0.05" transform="rotate(15 120 110)"/></svg>`;
+
+    const frontLayer = document.createElement('div');
+    frontLayer.className = 'hero-layer hero-front';
+    const productImg = document.createElement('div');
+    productImg.className = 'product-img';
+    productImg.textContent = '\u2B22'; // hexagon
+    frontLayer.appendChild(productImg);
+
+    hero.append(bgLayer, midLayer, frontLayer);
+
+    // Parallax mouse tracking
+    panel.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      bgLayer.style.transform = `translate(${x * -8}px, ${y * -6}px) scale(1.05)`;
+      midLayer.style.transform = `translate(${x * 12}px, ${y * 10}px)`;
+      frontLayer.style.transform = `translate(${x * 20}px, ${y * 16}px)`;
+    });
+    panel.addEventListener('mouseleave', () => {
+      bgLayer.style.transform = 'translate(0,0) scale(1.05)';
+      midLayer.style.transform = 'translate(0,0)';
+      frontLayer.style.transform = 'translate(0,0)';
+    });
+
+    // Collapsed tab
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.innerHTML = `<div class="tab-icon">\u2B22</div><span class="tab-text">Explore</span>`;
+
+    // Content
+    const content = document.createElement('div');
+    content.className = 'side-content';
+
+    content.innerHTML = `
+      <span class="side-label">Sponsored</span>
+      <span class="side-title">AI Agent Platform</span>
+      <span class="side-desc">Deploy autonomous agents at scale. Enterprise-grade security built in.</span>
+    `;
+
+    // Hover-to-reveal stats + QR
+    const reveal = document.createElement('div');
+    reveal.className = 'reveal';
+    const revealInner = document.createElement('div');
+    revealInner.className = 'reveal-inner';
+
+    const stats = document.createElement('div');
+    stats.className = 'reveal-stats';
+    stats.innerHTML = `
+      <div class="stat"><span class="stat-label">Agents</span><span class="stat-value">Unlimited</span></div>
+      <div class="stat"><span class="stat-label">Uptime</span><span class="stat-value">99.99%</span></div>
+      <div class="stat"><span class="stat-label">Price</span><span class="stat-value">$7/mo</span></div>
+    `;
+
+    const qrBlock = document.createElement('div');
+    qrBlock.className = 'qr-block';
+    const qrCode = document.createElement('div');
+    qrCode.className = 'qr-code';
+    qrCode.innerHTML = generateQR('https://example.com/ai-platform', 56);
+    const qrLabel = document.createElement('span');
+    qrLabel.className = 'qr-label';
+    qrLabel.textContent = 'Scan to try';
+    qrBlock.append(qrCode, qrLabel);
+
+    revealInner.append(stats, qrBlock);
+    reveal.appendChild(revealInner);
+    content.appendChild(reveal);
+
+    // CTA
+    const cta = document.createElement('button');
+    cta.className = 'side-cta';
+    cta.textContent = 'Start Free Trial';
+    cta.addEventListener('click', () => emitEvent('click', 'side'));
+    content.appendChild(cta);
+
+    // Dismiss
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'side-dismiss';
+    dismissBtn.setAttribute('aria-label', 'Dismiss advertisement');
+    dismissBtn.innerHTML = '&#10005;';
+    dismissBtn.addEventListener('click', (e) => { e.stopPropagation(); dismissAd('side'); });
+
+    // Ad info
+    const adInfo = document.createElement('div');
+    adInfo.className = 'ad-info';
+    adInfo.innerHTML = `<svg viewBox="0 0 16 16" fill="none"><path d="M8 1L15 14H1L8 1Z" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/><text x="8" y="12" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="7" font-weight="700" font-family="sans-serif">i</text></svg>`;
+
+    inner.append(hero, tab, content, dismissBtn, adInfo);
+    panel.appendChild(inner);
+    shadow.appendChild(panel);
+    document.documentElement.appendChild(sideHost);
+
+    emitEvent('loaded', 'side');
+    setTimeout(() => { if (sideHost && sideHost.isConnected) emitEvent('impression', 'side'); }, 1000);
+  }
+
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  //  FOOTER BANNER (interactive, layered, with QR)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  let footerHost = null;
+
+  function createFooterBanner() {
+    if (footerHost) { footerHost.remove(); footerHost = null; }
+    if (!CONFIG.enabled || isDismissed('footer')) return;
+
+    const accent = CONFIG.accent;
+    const accent2 = adjustColor(accent, -40);
+    const isGlass = CONFIG.mode === 'glass';
+
+    footerHost = document.createElement('div');
+    footerHost.id = 'ff-footer-host';
+    footerHost.style.cssText = `position:fixed; bottom:0; left:0; right:0; z-index:2147483647; pointer-events:none; padding-bottom:env(safe-area-inset-bottom, 0px);`;
+
+    const shadow = footerHost.attachShadow({ mode: 'open' });
+
+    // Preset shell styles
+    const presetStyles = {
+      capsule: `border-radius: 16px; margin: 0 12px;`,
+      angled: `clip-path: polygon(2% 0%, 100% 0%, 100% 100%, 0% 100%); margin: 0 8px;`,
+      signature: ``
+    };
+
+    const style = document.createElement('style');
+    style.textContent = `
+      :host { display: block; }
+
+      .footer-banner {
+        pointer-events: auto;
+        padding: 8px;
+        animation: enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes enter {
+        from { transform: translateY(100%); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+      }
+      @keyframes exit {
+        to { transform: translateY(100%); opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .footer-banner { animation: none !important; opacity: 1; transform: none; }
+      }
+
+      .shell {
+        position: relative;
+        overflow: hidden;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        ${isGlass
+          ? `background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.12);`
+          : `background: #1c1c1e; border: 1px solid rgba(255,255,255,0.05);`
+        }
+        ${presetStyles[CONFIG.preset] || ''}
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+      }
+
+      @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+        .shell { background: rgba(28,28,30,0.96) !important; }
+      }
+
+      .shell.sig-mask {
+        -webkit-mask-image: var(--sig-mask);
+        mask-image: var(--sig-mask);
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        border: none;
+      }
+
+      /* ── Main strip ── */
+      .strip {
+        display: flex;
+        align-items: stretch;
+        height: 80px;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        color: #fff;
+        position: relative;
+      }
+
+      /* ── Hero creative with parallax layers ── */
+      .creative {
+        width: 200px;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .creative-layer {
+        position: absolute;
+        inset: 0;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform;
+      }
+      .creative-bg {
+        background: linear-gradient(135deg, ${accent}, ${accent2});
+        z-index: 0;
+      }
+      .creative-shapes {
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .creative-shapes svg { opacity: 0.15; }
+      .creative-front {
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Product image that "leaps" forward */
+      .product {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.18);
+        border: 1.5px solid rgba(255,255,255,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .shell:hover .product {
+        transform: translateY(-4px) scale(1.06);
+      }
+
+      /* Glow on hover */
+      .creative::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 60%, rgba(255,255,255,0.12), transparent 50%);
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .shell:hover .creative::after { opacity: 1; }
+
+      /* ── Text ── */
+      .text {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 3px;
+      }
+      .text-label {
+        font-size: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: rgba(255,255,255,0.35);
+      }
+      .text-headline {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.2px;
+      }
+      .text-sub {
+        font-size: 11px;
+        color: rgba(255,255,255,0.55);
+        line-height: 1.2;
+      }
+
+      /* ── Hover-to-reveal detail row ── */
+      .reveal-row {
+        display: flex;
+        gap: 6px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s;
+        margin-top: 0;
+      }
+      .shell:hover .reveal-row { max-height: 28px; margin-top: 4px; }
+
+      .chip {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.6);
+        white-space: nowrap;
+      }
+      .chip-accent { color: ${accent}; border-color: ${accent}33; background: ${accent}11; }
+
+      /* ── QR Code ── */
+      .qr {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 8px 10px;
+        flex-shrink: 0;
+        align-self: center;
+      }
+      .qr-box {
+        width: 48px;
+        height: 48px;
+        padding: 3px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.08);
+        transition: transform 0.2s, border-color 0.2s;
+      }
+      .qr-box:hover { transform: scale(1.08); border-color: rgba(255,255,255,0.2); }
+      .qr-box svg { width: 100%; height: 100%; }
+      .qr-hint {
+        font-size: 7px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255,255,255,0.3);
+      }
+
+      /* ── CTA ── */
+      .cta {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: ${accent};
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        flex-shrink: 0;
+        align-self: center;
+        white-space: nowrap;
+        transition: transform 0.1s;
+        height: 36px;
+        display: flex;
+        align-items: center;
+      }
+      .cta:hover { transform: scale(1.03); }
+      .cta:active { transform: scale(0.97); }
+      .cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+      /* ── Controls ── */
+      .controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 0 8px;
+        flex-shrink: 0;
+      }
+      .ad-badge { opacity: 0.35; }
+      .ad-badge svg { width: 12px; height: 12px; }
+      .dismiss {
+        width: 24px; height: 24px;
+        min-width: 44px; min-height: 44px;
+        display: flex; align-items: center; justify-content: center;
+        border: none; border-radius: 50%;
+        background: transparent;
+        color: rgba(255,255,255,0.35);
+        font-size: 14px; cursor: pointer; font-family: inherit;
+        padding: 0; transition: color 0.12s;
+      }
+      .dismiss:hover { color: rgba(255,255,255,0.8); }
+      .dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    `;
+    shadow.appendChild(style);
+
+    // ── DOM ──
+    const banner = document.createElement('div');
+    banner.className = 'footer-banner';
+    banner.setAttribute('role', 'complementary');
+    banner.setAttribute('aria-label', 'Advertisement');
+
+    const shell = document.createElement('div');
+    shell.className = 'shell';
+
+    // Signature mask
+    if (CONFIG.preset === 'signature') {
+      const path = 'M0,14 C100,0 200,6 300,3 C400,0 500,8 600,4 C700,0 750,6 800,0 L800,80 L0,80 Z';
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 80'><path d='${path}' fill='white'/></svg>`;
+      shell.style.setProperty('--sig-mask', `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+      shell.classList.add('sig-mask');
+    }
+
+    const strip = document.createElement('div');
+    strip.className = 'strip';
+
+    // Creative with parallax
+    const creative = document.createElement('div');
+    creative.className = 'creative';
+
+    const bgL = document.createElement('div');
+    bgL.className = 'creative-layer creative-bg';
+    const midL = document.createElement('div');
+    midL.className = 'creative-layer creative-shapes';
+    midL.innerHTML = `<svg width="200" height="80" viewBox="0 0 200 80"><circle cx="30" cy="60" r="40" fill="white"/><circle cx="160" cy="20" r="30" fill="white"/><rect x="70" y="30" width="50" height="50" rx="12" fill="white" transform="rotate(20 95 55)"/></svg>`;
+    const frtL = document.createElement('div');
+    frtL.className = 'creative-layer creative-front';
+    const prod = document.createElement('div');
+    prod.className = 'product';
+    prod.textContent = '\u2B22';
+    frtL.appendChild(prod);
+
+    creative.append(bgL, midL, frtL);
+
+    // Parallax
+    shell.addEventListener('mousemove', (e) => {
+      const rect = creative.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      bgL.style.transform = `translate(${x * -6}px, ${y * -4}px) scale(1.06)`;
+      midL.style.transform = `translate(${x * 10}px, ${y * 8}px)`;
+      frtL.style.transform = `translate(${x * 16}px, ${y * 12}px)`;
+    });
+    shell.addEventListener('mouseleave', () => {
+      bgL.style.transform = 'translate(0,0) scale(1.06)';
+      midL.style.transform = 'translate(0,0)';
+      frtL.style.transform = 'translate(0,0)';
+    });
+
+    // Text
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.innerHTML = `
+      <span class="text-label">Sponsored</span>
+      <span class="text-headline">AI Agent Platform — Build & Deploy</span>
+      <span class="text-sub">Enterprise-grade. Unlimited agents. $7/mo.</span>
+      <div class="reveal-row">
+        <span class="chip chip-accent">Free Trial</span>
+        <span class="chip">99.99% Uptime</span>
+        <span class="chip">SOC 2</span>
+      </div>
+    `;
+
+    // QR
+    const qr = document.createElement('div');
+    qr.className = 'qr';
+    const qrBox = document.createElement('div');
+    qrBox.className = 'qr-box';
+    qrBox.innerHTML = generateQR('https://example.com/try-now', 48);
+    const qrHint = document.createElement('span');
+    qrHint.className = 'qr-hint';
+    qrHint.textContent = 'Scan';
+    qr.append(qrBox, qrHint);
+
+    // CTA
+    const cta = document.createElement('button');
+    cta.className = 'cta';
+    cta.textContent = 'Get Started';
+    cta.addEventListener('click', () => emitEvent('click', 'footer'));
+
+    // Controls
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+    controls.innerHTML = `
+      <div class="ad-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L15 14H1L8 1Z" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"/><text x="8" y="12" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="700" font-family="sans-serif">i</text></svg></div>
+    `;
+    const dismissBtn = document.createElement('button');
+    dismissBtn.className = 'dismiss';
+    dismissBtn.setAttribute('aria-label', 'Dismiss advertisement');
+    dismissBtn.innerHTML = '&#10005;';
+    dismissBtn.addEventListener('click', () => dismissAd('footer'));
+    controls.appendChild(dismissBtn);
+
+    strip.append(creative, text, qr, cta, controls);
+    shell.appendChild(strip);
+    banner.appendChild(shell);
+    shadow.appendChild(banner);
+    document.documentElement.appendChild(footerHost);
+
+    // Keyboard dismiss
+    const kh = (e) => { if (e.key === 'Escape') { dismissAd('footer'); document.removeEventListener('keydown', kh); } };
+    document.addEventListener('keydown', kh);
+
+    emitEvent('loaded', 'footer');
+    setTimeout(() => { if (footerHost && footerHost.isConnected) emitEvent('impression', 'footer'); }, 1000);
+  }
+
+  // ── Dismiss handler ──
+  function dismissAd(zone) {
+    const host = zone === 'footer' ? footerHost : sideHost;
+    if (!host) return;
+
+    const container = host.shadowRoot.querySelector('.footer-banner, .side-panel');
+    if (container) {
+      container.style.animation = zone === 'footer'
+        ? 'exit 0.22s cubic-bezier(0.55,0,1,0.45) forwards'
+        : 'slideOut 0.25s cubic-bezier(0.55,0,1,0.45) forwards';
+      container.addEventListener('animationend', () => { host.remove(); }, { once: true });
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) host.remove();
+    } else { host.remove(); }
+
+    if (zone === 'footer') footerHost = null;
+    else sideHost = null;
+
+    setDismissed(zone);
+    emitEvent('dismiss', zone);
+  }
+
+  // ── Controls ──
+  function wireControls() {
+    document.getElementById('presetSelect').addEventListener('change', (e) => { CONFIG.preset = e.target.value; rebuild(); });
+    document.getElementById('modeToggle').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      document.querySelectorAll('#modeToggle button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active'); CONFIG.mode = b.dataset.mode; rebuild();
+    });
+    document.getElementById('accentColor').addEventListener('input', (e) => { CONFIG.accent = e.target.value; rebuild(); });
+    document.getElementById('enableToggle').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      document.querySelectorAll('#enableToggle button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active'); CONFIG.enabled = b.dataset.enabled === 'true';
+      if (CONFIG.enabled) rebuild();
+      else {
+        if (footerHost) { footerHost.remove(); footerHost = null; }
+        if (sideHost) { sideHost.remove(); sideHost = null; }
+      }
+    });
+    document.getElementById('resetDismiss').addEventListener('click', () => { clearAll(); rebuild(); });
+  }
+
+  function rebuild() { createFooterBanner(); createSidePanel(); }
+
+  wireControls();
+  rebuild();
+})();
+</script>
+</body>
+</html>
