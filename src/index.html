@@ -158,7 +158,7 @@
     if (isDismissed('side')) return null;
     const host = document.createElement('div');
     host.id = 'ff-side-host';
-    host.style.cssText = 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;';
+    host.style.cssText = 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;contain:layout style;';
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({ mode: 'closed' });
     const A = state.accent, G = state.mode === 'glass';
@@ -181,24 +181,27 @@
         .shell {
           position: absolute; inset: 0;
           ${G
-            ? `background: rgba(8,8,18,0.55); -webkit-backdrop-filter: blur(28px) saturate(200%); backdrop-filter: blur(28px) saturate(200%); border-left: 1px solid rgba(255,255,255,0.1);`
+            ? `background: rgba(255,255,255,0.08); -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1); backdrop-filter: blur(40px) saturate(180%) brightness(1.1); border-left: 1px solid rgba(255,255,255,0.18); border-top: 1px solid rgba(255,255,255,0.12);`
             : `background: linear-gradient(178deg, #06060e 0%, ${darken(A,0.25)} 60%, #0a0818 100%);`}
           clip-path: polygon(22% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 88%);
           transition: clip-path 0.45s cubic-bezier(0.16,1,0.3,1);
           box-shadow: -6px 0 40px rgba(0,0,0,0.5);
         }
-        .panel:hover .shell { clip-path: polygon(6% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 94%); }
+        .panel:hover .shell { clip-path: polygon(6% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 94%); will-change: clip-path; }
 
         @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-          .shell { background: rgba(10,10,22,0.96) !important; }
+          .shell { background: rgba(10,10,22,0.92) !important; }
         }
+
+        /* Glass inner glow edge */
+        ${G ? `.shell::after { content:''; position:absolute; inset:0; clip-path:inherit; background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(255,255,255,0.04) 100%); pointer-events:none; }` : ''}
 
         /* ── Breakout athlete figure — bursts LEFT past panel edge ── */
         .breakout {
           position: absolute; top: 12px; left: -55px;
           width: 200px; height: 260px;
           z-index: 3;
-          filter: drop-shadow(-6px 4px 24px rgba(0,0,0,0.7));
+          /* Use box-shadow on child instead of filter drop-shadow for GPU perf */
           transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
           pointer-events: none;
         }
@@ -221,8 +224,8 @@
         .athlete::before {
           content: ''; position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%);
           width: 160%; height: 160%;
-          background: radial-gradient(ellipse, ${hexRgba(A,0.5)} 0%, ${hexRgba(A,0.15)} 40%, transparent 70%);
-          filter: blur(18px); z-index: -1;
+          background: radial-gradient(ellipse, ${hexRgba(A,0.35)} 0%, ${hexRgba(A,0.1)} 40%, transparent 70%);
+          z-index: -1;
         }
         /* Energy streaks */
         .streak {
@@ -288,10 +291,11 @@
         .cta:hover { transform: scale(1.06); filter: brightness(1.15); }
         .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
-        .qr-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; opacity: 0.65; transition: opacity 0.2s; }
-        .qr-row:hover { opacity: 1; }
-        .qr-row svg { color: rgba(255,255,255,0.8); }
-        .qr-row .ql { font: 400 8px/1.3 -apple-system, sans-serif; color: rgba(255,255,255,0.4); }
+        .qr-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; opacity: 0.35; transition: opacity 0.35s, transform 0.35s; transform: scale(0.95); }
+        .qr-row:hover { opacity: 1; transform: scale(1); }
+        .qr-row:hover svg { filter: drop-shadow(0 0 8px ${hexRgba(A,0.5)}); }
+        .qr-row svg { color: rgba(255,255,255,0.75); transition: filter 0.3s; }
+        .qr-row .ql { font: 400 9px/1.3 -apple-system, sans-serif; color: rgba(255,255,255,0.45); }
 
         /* Dismiss */
         .x {
@@ -335,7 +339,7 @@
           </div>
           <button class="cta" tabindex="0">Shop Now &#9654;</button>
           <div class="qr-row">
-            <div>${generateQR('https://brand.co/side', 44)}</div>
+            <div>${generateQR('https://brand.co/side', 58)}</div>
             <div class="ql">Scan to<br>shop mobile</div>
           </div>
         </div>
@@ -363,15 +367,20 @@
       logEvent('ff:ad:interaction', { zone: 'side', action: 'swatch', color: c });
     }));
 
-    // Parallax
+    // Parallax — rAF throttled for GPU perf
     const panel = shadow.querySelector('.panel');
     const bo = shadow.querySelector('.breakout');
+    let sideRaf = 0;
     panel.addEventListener('mousemove', e => {
-      const r = panel.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      bo.style.transform = 'translate(' + (x*-18) + 'px,' + (y*-12) + 'px)';
+      if (sideRaf) return;
+      sideRaf = requestAnimationFrame(() => {
+        const r = panel.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        bo.style.transform = 'translate(' + (x*-18) + 'px,' + (y*-12) + 'px)';
+        sideRaf = 0;
+      });
     });
-    panel.addEventListener('mouseleave', () => { bo.style.transform = ''; });
+    panel.addEventListener('mouseleave', () => { cancelAnimationFrame(sideRaf); sideRaf = 0; bo.style.transform = ''; });
 
     shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'side', preset: state.preset, mode: state.mode }));
     shadow.querySelector('.x').addEventListener('click', () => {
@@ -393,7 +402,7 @@
     if (isDismissed('footer')) return null;
     const host = document.createElement('div');
     host.id = 'ff-footer-host';
-    host.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;';
+    host.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;contain:layout style;';
     document.documentElement.appendChild(host);
     const shadow = host.attachShadow({ mode: 'closed' });
     const A = state.accent, G = state.mode === 'glass', P = state.preset;
@@ -405,7 +414,7 @@
       signature: { d: 'polygon(0% 42%, 6% 18%, 14% 38%, 22% 12%, 32% 28%, 42% 6%, 52% 22%, 62% 4%, 72% 20%, 82% 8%, 92% 26%, 96% 12%, 100% 28%, 100% 100%, 0% 100%)', m: 'polygon(0% 28%, 12% 14%, 28% 24%, 44% 8%, 58% 18%, 74% 6%, 88% 16%, 100% 20%, 100% 100%, 0% 100%)' }
     };
     const clip = clips[P];
-    const bg = G ? 'rgba(8,8,18,0.55)' : 'linear-gradient(95deg, #06060e 0%, ' + darken(A,0.22) + ' 45%, #0a0818 100%)';
+    const bg = G ? 'rgba(255,255,255,0.08)' : 'linear-gradient(95deg, #06060e 0%, ' + darken(A,0.22) + ' 45%, #0a0818 100%)';
 
     shadow.innerHTML = `
       <style>
@@ -422,21 +431,24 @@
         .shell {
           position: absolute; inset: 0;
           background: ${bg};
-          ${G ? '-webkit-backdrop-filter: blur(28px) saturate(200%); backdrop-filter: blur(28px) saturate(200%); border-top: 1px solid rgba(255,255,255,0.1);' : ''}
+          ${G ? '-webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1); backdrop-filter: blur(40px) saturate(180%) brightness(1.1); border-top: 1px solid rgba(255,255,255,0.18);' : ''}
           clip-path: ${clip.d};
           box-shadow: 0 -4px 40px rgba(0,0,0,0.45);
           transition: clip-path 0.4s cubic-bezier(0.16,1,0.3,1);
         }
         @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-          .shell { background: rgba(10,10,22,0.96) !important; }
+          .shell { background: rgba(10,10,22,0.92) !important; }
         }
+
+        /* Glass inner highlight */
+        ${G ? `.shell::after { content:''; position:absolute; inset:0; clip-path:inherit; background: linear-gradient(175deg, rgba(255,255,255,0.14) 0%, transparent 35%, rgba(255,255,255,0.03) 100%); pointer-events:none; }` : ''}
 
         /* ── Breakout product — extends ABOVE the banner ── */
         .breakout {
           position: absolute; bottom: 16px; left: 48px;
           width: 210px; height: 220px;
           z-index: 5;
-          filter: drop-shadow(0 -10px 30px rgba(0,0,0,0.55)) drop-shadow(0 0 50px ${hexRgba(A,0.25)});
+          box-shadow: 0 -10px 30px rgba(0,0,0,0.45);
           transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
           cursor: pointer;
         }
@@ -468,11 +480,10 @@
         .product::after {
           content: ''; position: absolute; top: 45%; left: 50%;
           transform: translate(-50%,-50%); width: 150%; height: 150%;
-          background: radial-gradient(ellipse, ${hexRgba(A,0.45)} 0%, transparent 60%);
-          filter: blur(20px); z-index: -1;
-          animation: glow-breathe 3s ease-in-out infinite alternate;
+          background: radial-gradient(ellipse, ${hexRgba(A,0.35)} 0%, transparent 60%);
+          z-index: -1;
+          /* Static glow — no infinite animation for GPU savings */
         }
-        @keyframes glow-breathe { from { opacity: 0.5; transform: translate(-50%,-50%) scale(1); } to { opacity: 1; transform: translate(-50%,-50%) scale(1.12); } }
 
         /* ── Content ── */
         .content {
@@ -514,10 +525,11 @@
         .cta:hover { transform: scale(1.06); filter: brightness(1.15); }
         .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
-        .qr { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; opacity: 0.6; transition: opacity 0.2s; }
-        .qr:hover { opacity: 1; }
-        .qr svg { color: rgba(255,255,255,0.8); }
-        .qr span { font: 500 7px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.5px; }
+        .qr { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; opacity: 0.3; transition: opacity 0.35s, transform 0.35s; transform: scale(0.92); }
+        .qr:hover { opacity: 1; transform: scale(1); }
+        .qr:hover svg { filter: drop-shadow(0 0 10px ${hexRgba(A,0.5)}); }
+        .qr svg { color: rgba(255,255,255,0.75); transition: filter 0.3s; }
+        .qr span { font: 500 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; }
 
         .dismiss {
           position: absolute; top: 6px; right: 16px;
@@ -583,7 +595,7 @@
           </div>
           <button class="cta" tabindex="0">Shop Now &#9654;</button>
           <div class="qr">
-            ${generateQR('https://brand.co/footer', 50)}
+            ${generateQR('https://brand.co/footer', 64)}
             <span>Scan</span>
           </div>
         </div>
@@ -591,15 +603,20 @@
         <button class="dismiss" aria-label="Dismiss advertisement" tabindex="0">&times;</button>
       </div>`;
 
-    // Parallax on product
+    // Parallax on product — rAF throttled
     const banner = shadow.querySelector('.banner');
     const bk = shadow.querySelector('.breakout');
+    let footRaf = 0;
     banner.addEventListener('mousemove', e => {
-      const r = banner.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-      bk.style.transform = 'translate(' + (x*-22) + 'px,' + (y*-14) + 'px)';
+      if (footRaf) return;
+      footRaf = requestAnimationFrame(() => {
+        const r = banner.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        bk.style.transform = 'translate(' + (x*-22) + 'px,' + (y*-14) + 'px)';
+        footRaf = 0;
+      });
     });
-    banner.addEventListener('mouseleave', () => { bk.style.transform = ''; });
+    banner.addEventListener('mouseleave', () => { cancelAnimationFrame(footRaf); footRaf = 0; bk.style.transform = ''; });
 
     shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'footer', preset: P, mode: state.mode }));
     shadow.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => logEvent('ff:ad:interaction', { zone: 'footer', chip: c.textContent })));
