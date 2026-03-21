@@ -1,0 +1,13 @@
+{
+  "name": "adbanner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "optimize-images": "node scripts/optimize-images.mjs"
+  },
+  "dependencies": {
+    "sharp": "^0.33.2",
+    "thumbhash": "^0.1.1"
+  }
+}

@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Interactive Ad System — Breakout Design</title>
+<!-- REQ-011: Preload LCP hero images (AVIF primary, WebP fallback) -->
+<link rel="preload" as="image" type="image/avif" href="images/optimized/athlete-hero-760w.avif" media="(min-width:768px)" fetchpriority="high">
+<link rel="preload" as="image" type="image/avif" href="images/optimized/athlete-hero-400w.avif" media="(max-width:767px)" fetchpriority="high">
+<link rel="preload" as="image" type="image/avif" href="images/optimized/product-hero-760w.avif" media="(min-width:768px)">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -62,6 +66,22 @@
   .article blockquote { border-left: 3px solid var(--accent); padding: 10px 18px; margin: 20px 0; font-style: italic; color: #555; background: #f8f8f8; border-radius: 0 6px 6px 0; }
   .article .img-placeholder { width: 100%; height: 200px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; margin: 24px 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 500; }
 
+  /* REQ-003, REQ-010, REQ-017: ThumbHash placeholder + crossfade, intrinsic sizing, zero CLS */
+  .hero-img-wrap {
+    position: relative; width: 100%; aspect-ratio: 3/2; border-radius: 12px; margin: 24px 0;
+    overflow: hidden; background-size: cover; background-position: center;
+  }
+  .hero-img-wrap picture { display: block; width: 100%; height: 100%; }
+  .hero-img-wrap img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .hero-img-wrap img.loaded { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-img-wrap img { transition: none; }
+    .hero-img-wrap img.loaded { opacity: 1; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }
   }
@@ -112,7 +132,23 @@
   <h1>The Future of Interactive Advertising: Beyond the Banner</h1>
   <div class="meta">By <a href="#">Sarah Chen</a> · March 21, 2026 · 8 min read</div>
   <p>The advertising industry is undergoing a fundamental transformation. As consumers grow increasingly blind to traditional banner ads, brands are turning to interactive, immersive formats that demand attention through engagement rather than interruption.</p>
-  <div class="img-placeholder">Hero Image</div>
+  <!-- REQ-001/002/004/005/006/009/010/011/012: ThumbHash placeholder + AVIF/WebP/JPEG cascade + srcset -->
+  <div class="hero-img-wrap" data-thumbhash="zPYFHQYGp4eCapgYx3Rqd0mPlvJY">
+    <picture>
+      <source type="image/avif"
+              srcset="images/optimized/athlete-hero-400w.avif 400w, images/optimized/athlete-hero-760w.avif 760w"
+              sizes="(min-width:768px) 680px, 100vw">
+      <source type="image/webp"
+              srcset="images/optimized/athlete-hero-400w.webp 400w, images/optimized/athlete-hero-760w.webp 760w"
+              sizes="(min-width:768px) 680px, 100vw">
+      <img src="images/optimized/athlete-hero-760w.jpg"
+           srcset="images/optimized/athlete-hero-400w.jpg 400w, images/optimized/athlete-hero-760w.jpg 760w"
+           sizes="(min-width:768px) 680px, 100vw"
+           width="760" height="1013"
+           alt="Athlete in dynamic action pose"
+           decoding="async" fetchpriority="high">
+    </picture>
+  </div>
   <p>Nike's #BleedBlue campaign demonstrated that when advertising breaks free from rectangular constraints and embraces bold, boundary-defying visuals, engagement rates soar. The campaign's imagery of athletes literally bursting through ad boundaries became iconic.</p>
   <blockquote>"The best ads don't feel like ads. They feel like experiences that happen to have a brand attached." — Nike Creative Director</blockquote>
   <p>BMW took a different approach with their interactive color configurator, letting users explore vehicle options directly within the ad unit. This tactile interaction increased time-on-ad by 340% compared to static banners.</p>
@@ -142,6 +178,184 @@
   function hexRgba(h, a) { return 'rgba(' + parseInt(h.slice(1,3),16) + ',' + parseInt(h.slice(3,5),16) + ',' + parseInt(h.slice(5,7),16) + ',' + a + ')'; }
   function darken(h, f) { return 'rgb(' + Math.round(parseInt(h.slice(1,3),16)*f) + ',' + Math.round(parseInt(h.slice(3,5),16)*f) + ',' + Math.round(parseInt(h.slice(5,7),16)*f) + ')'; }
 
+  /* ══ ThumbHash decode — REQ-001/002 ══
+   * Minimal ThumbHash decoder (base64 → RGBA → canvas → dataURL).
+   * Runs in < 0.5ms on modern hardware. */
+  function thumbHashToDataURL(base64) {
+    var bin = atob(base64);
+    var hash = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) hash[i] = bin.charCodeAt(i);
+
+    // Decode header
+    var header = hash[0] | (hash[1] << 8) | (hash[2] << 16);
+    var l_dc = header & 63, p_dc = (header >> 6) & 63, q_dc = (header >> 12) & 63;
+    var l_scale = (header >> 18) & 31, hasAlpha = (header >> 23) & 1;
+    var p_scale = (hash[3] & 63), q_scale = ((hash[3] >> 6) | ((hash[4] & 3) << 2));
+    var isLandscape = (hash[4] >> 7) & 1;
+    var lx = Math.max(3, isLandscape ? (hasAlpha ? 5 : 7) : ((hash[4] >> 2) & 7) + 3);
+    var ly = Math.max(3, isLandscape ? ((hash[4] >> 2) & 7) + 3 : (hasAlpha ? 5 : 7));
+    var a_dc = hasAlpha ? (hash[5] & 15) : 15;
+    var a_scale = hasAlpha ? (hash[5] >> 4) : 0;
+
+    // Decode AC coefficients
+    var ac_start = hasAlpha ? 6 : 5;
+    var ac_idx = 0;
+    function decode_ac(nx, ny, scale) {
+      var result = [];
+      for (var cy = 0; cy < ny; cy++) {
+        for (var cx = (cy === 0 ? 1 : 0); cx * ny < nx * (ny - cy); cx++) {
+          var bit_idx = ac_start * 8 + ac_idx * 4;
+          var byte_idx = bit_idx >> 3;
+          var bit_off = bit_idx & 7;
+          var val = ((hash[byte_idx] >> bit_off) | (byte_idx + 1 < hash.length ? hash[byte_idx + 1] << (8 - bit_off) : 0)) & 15;
+          result.push(((val + 0.5) / 16 - 0.5) * scale);
+          ac_idx++;
+        }
+      }
+      return result;
+    }
+
+    var l_ac = decode_ac(lx, ly, l_scale);
+    var p_ac = decode_ac(3, 3, p_scale);
+    var q_ac = decode_ac(3, 3, q_scale);
+    var a_ac = hasAlpha ? decode_ac(5, 5, a_scale) : [];
+
+    // Render to pixels
+    var ratio = isLandscape ? 32 : 32;
+    var w = Math.round(isLandscape ? ratio : Math.round(ratio * lx / ly));
+    var h2 = Math.round(isLandscape ? Math.round(ratio * ly / lx) : ratio);
+    var pixels = new Uint8Array(w * h2 * 4);
+
+    var l_dc_f = (l_dc + 0.5) / 63;
+    var p_dc_f = (p_dc + 0.5) / 31 - 1;
+    var q_dc_f = (q_dc + 0.5) / 31 - 1;
+    var a_dc_f = (a_dc + 0.5) / 15;
+
+    var cosX_l = new Float32Array(lx);
+    var cosX_p = new Float32Array(3);
+    var cosX_q = new Float32Array(3);
+    var cosX_a = hasAlpha ? new Float32Array(5) : null;
+
+    for (var y = 0; y < h2; y++) {
+      for (var x = 0; x < w; x++) {
+        var fx = (x + 0.5) / w;
+        var fy = (y + 0.5) / h2;
+
+        // L channel
+        var j;
+        for (j = 0; j < lx; j++) cosX_l[j] = Math.cos(Math.PI * fx * j);
+        for (j = 0; j < 3; j++) cosX_p[j] = Math.cos(Math.PI * fx * j);
+        for (j = 0; j < 3; j++) cosX_q[j] = Math.cos(Math.PI * fx * j);
+        if (hasAlpha) for (j = 0; j < 5; j++) cosX_a[j] = Math.cos(Math.PI * fx * j);
+
+        var l = l_dc_f, p = p_dc_f, q = q_dc_f, a = a_dc_f;
+        var li = 0, pi = 0, qi = 0, ai = 0;
+
+        for (var cy = 0; cy < ly; cy++) {
+          var cosY = Math.cos(Math.PI * fy * cy);
+          for (var cx = (cy === 0 ? 1 : 0); cx * ly < lx * (ly - cy); cx++) {
+            l += l_ac[li++] * cosX_l[cx] * cosY;
+          }
+        }
+        for (var cy2 = 0; cy2 < 3; cy2++) {
+          var cosY2 = Math.cos(Math.PI * fy * cy2);
+          for (var cx2 = (cy2 === 0 ? 1 : 0); cx2 < 3 - cy2; cx2++) {
+            p += p_ac[pi++] * cosX_p[cx2] * cosY2;
+            q += q_ac[qi++] * cosX_q[cx2] * cosY2;
+          }
+        }
+        if (hasAlpha) {
+          for (var cy3 = 0; cy3 < 5; cy3++) {
+            var cosY3 = Math.cos(Math.PI * fy * cy3);
+            for (var cx3 = (cy3 === 0 ? 1 : 0); cx3 < 5 - cy3; cx3++) {
+              a += a_ac[ai++] * cosX_a[cx3] * cosY3;
+            }
+          }
+        }
+
+        var b = l - 2 / 3 * p;
+        var r2 = (3 * l - b + q) / 2;
+        var g = r2 - q;
+        var off = (y * w + x) * 4;
+        pixels[off]     = Math.max(0, Math.min(255, Math.round(r2 * 255)));
+        pixels[off + 1] = Math.max(0, Math.min(255, Math.round(g * 255)));
+        pixels[off + 2] = Math.max(0, Math.min(255, Math.round(b * 255)));
+        pixels[off + 3] = Math.max(0, Math.min(255, Math.round(a * 255)));
+      }
+    }
+
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h2;
+    var ctx = canvas.getContext('2d');
+    var imgData = ctx.createImageData(w, h2);
+    imgData.data.set(pixels);
+    ctx.putImageData(imgData, 0, 0);
+    return canvas.toDataURL();
+  }
+
+  /* ══ REQ-013: Network-aware quality selection ══ */
+  function shouldLoadImages() {
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!conn) return 'full'; // no API = assume good connection
+    var ect = conn.effectiveType;
+    if (ect === 'slow-2g' || ect === '2g') return 'thumbhash-only';
+    if (ect === '3g') return 'mobile';
+    return 'full';
+  }
+
+  /* ══ ThumbHash init — decode all placeholders on page ══ */
+  function initThumbHashes() {
+    var t0 = performance.now();
+    var wraps = document.querySelectorAll('[data-thumbhash]');
+    var quality = shouldLoadImages();
+
+    wraps.forEach(function(wrap) {
+      var hash = wrap.getAttribute('data-thumbhash');
+      if (!hash) return;
+
+      // Decode ThumbHash to blurred background
+      var dataUrl = thumbHashToDataURL(hash);
+      wrap.style.backgroundImage = 'url(' + dataUrl + ')';
+
+      // REQ-013: On 2g, skip loading real images
+      if (quality === 'thumbhash-only') {
+        var imgs = wrap.querySelectorAll('img');
+        imgs.forEach(function(img) { img.removeAttribute('src'); img.removeAttribute('srcset'); });
+        return;
+      }
+
+      // REQ-013: On 3g, force mobile-size srcset
+      if (quality === 'mobile') {
+        var sources = wrap.querySelectorAll('source');
+        sources.forEach(function(s) {
+          var srcset = s.getAttribute('srcset') || '';
+          var mobileSrc = srcset.split(',')[0];
+          if (mobileSrc) s.setAttribute('srcset', mobileSrc.trim());
+        });
+      }
+
+      // REQ-003: Crossfade on load
+      var img = wrap.querySelector('img');
+      if (img) {
+        if (img.complete && img.naturalWidth > 0) {
+          img.classList.add('loaded');
+        } else {
+          img.addEventListener('load', function() { img.classList.add('loaded'); });
+        }
+      }
+    });
+
+    var elapsed = (performance.now() - t0).toFixed(2);
+    console.log('[AdBanner] ThumbHash decode: ' + elapsed + 'ms for ' + wraps.length + ' image(s), quality=' + quality);
+  }
+
+  // Run ThumbHash init immediately (before DOMContentLoaded for speed)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initThumbHashes);
+  } else {
+    initThumbHashes();
+  }
+
   function generateQR(url, size) {
     size = size || 80; const m = 21, cs = size / m; let r = '';
     function finder(ox, oy) { for (let y=0;y<7;y++) for (let x=0;x<7;x++) { if (y===0||y===6||x===0||x===6||(y>=2&&y<=4&&x>=2&&x<=4)) r += '<rect x="'+(ox+x)*cs+'" y="'+(oy+y)*cs+'" width="'+cs+'" height="'+cs+'" fill="currentColor"/>'; } }
@@ -149,6 +363,67 @@
     let h = 0; for (let i=0;i<url.length;i++) h = ((h<<5)-h+url.charCodeAt(i))|0;
     for (let y=0;y<m;y++) for (let x=0;x<m;x++) { if ((y<8&&x<8)||(y<8&&x>12)||(y>12&&x<8)) continue; h=((h*1103515245+12345)&0x7fffffff); if (h%3===0) r += '<rect x="'+x*cs+'" y="'+y*cs+'" width="'+cs+'" height="'+cs+'" fill="currentColor"/>'; }
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">'+r+'</svg>';
+  }
+
+  /* ══ Shadow DOM image helper — creates <picture> with ThumbHash inside shadow roots ══ */
+  function createOptimizedImage(name, thumbhash, altText, cls, width, height) {
+    var quality = shouldLoadImages();
+    var wrap = document.createElement('div');
+    wrap.className = cls || '';
+    wrap.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;background-size:cover;background-position:center;';
+
+    // Decode ThumbHash for instant placeholder
+    var dataUrl = thumbHashToDataURL(thumbhash);
+    wrap.style.backgroundImage = 'url(' + dataUrl + ')';
+
+    if (quality === 'thumbhash-only') return wrap;
+
+    var picture = document.createElement('picture');
+
+    // AVIF source
+    var avifSrc = document.createElement('source');
+    avifSrc.type = 'image/avif';
+    var avif400 = 'images/optimized/' + name + '-400w.avif 400w';
+    var avif760 = 'images/optimized/' + name + '-760w.avif 760w';
+    avifSrc.srcset = quality === 'mobile' ? avif400 : avif400 + ', ' + avif760;
+    avifSrc.sizes = '(min-width:768px) 760px, 400px';
+    picture.appendChild(avifSrc);
+
+    // WebP source
+    var webpSrc = document.createElement('source');
+    webpSrc.type = 'image/webp';
+    var webp400 = 'images/optimized/' + name + '-400w.webp 400w';
+    var webp760 = 'images/optimized/' + name + '-760w.webp 760w';
+    webpSrc.srcset = quality === 'mobile' ? webp400 : webp400 + ', ' + webp760;
+    webpSrc.sizes = '(min-width:768px) 760px, 400px';
+    picture.appendChild(webpSrc);
+
+    // JPEG fallback
+    var img = document.createElement('img');
+    img.src = 'images/optimized/' + name + '-760w.jpg';
+    img.srcset = 'images/optimized/' + name + '-400w.jpg 400w, images/optimized/' + name + '-760w.jpg 760w';
+    img.sizes = '(min-width:768px) 760px, 400px';
+    img.width = width || 760;
+    img.height = height || 1013;
+    img.alt = altText;
+    img.decoding = 'async';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.15s ease;position:absolute;top:0;left:0;';
+
+    // Reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      img.style.transition = 'none';
+    }
+
+    // Crossfade on load
+    if (img.complete && img.naturalWidth > 0) {
+      img.style.opacity = '1';
+    } else {
+      img.addEventListener('load', function() { img.style.opacity = '1'; });
+    }
+
+    picture.appendChild(img);
+    wrap.appendChild(picture);
+    return wrap;
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -321,6 +596,7 @@
 
         <div class="breakout">
           <div class="athlete"><div class="body"></div></div>
+          <div class="breakout-img" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:inherit;overflow:hidden;opacity:0.35;mix-blend-mode:screen;"></div>
         </div>
 
         <div class="v-label">Explore</div>
@@ -348,6 +624,13 @@
       </div>`;
 
     // Energy streaks
+    // Inject optimized athlete image into breakout container
+    var sideBreakoutImg = shadow.querySelector('.breakout-img');
+    if (sideBreakoutImg) {
+      var athleteImg = createOptimizedImage('athlete-hero', 'zPYFHQYGp4eCapgYx3Rqd0mPlvJY', 'Athlete breakout', '', 400, 533);
+      sideBreakoutImg.appendChild(athleteImg);
+    }
+
     const ath = shadow.querySelector('.athlete');
     for (let i = 0; i < 8; i++) {
       const s = document.createElement('div');
@@ -573,6 +856,7 @@
         <div class="shell"></div>
 
         <div class="breakout">
+          <div class="breakout-img" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:inherit;overflow:hidden;opacity:0.3;mix-blend-mode:screen;"></div>
           <div class="product">
             <div class="shoe"></div>
             <div class="sole"></div>
@@ -605,6 +889,13 @@
 
     // Parallax on product — rAF throttled
     const banner = shadow.querySelector('.banner');
+    // Inject optimized product image into breakout container
+    var footBreakoutImg = shadow.querySelector('.breakout-img');
+    if (footBreakoutImg) {
+      var productImg = createOptimizedImage('product-hero', 'iigKHYY2d4d2eIiAe5h3iieHgHIH', 'Product breakout', '', 400, 267);
+      footBreakoutImg.appendChild(productImg);
+    }
+
     const bk = shadow.querySelector('.breakout');
     let footRaf = 0;
     banner.addEventListener('mousemove', e => {
