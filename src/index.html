@@ -44,6 +44,20 @@
   .btn-sm:hover { background: #f0f0f0; }
   .config-group input[type="color"] { width: 24px; height: 20px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
 
+  /* ── Image Optimiser Panel ── */
+  .img-optimiser { display: none; flex-direction: column; gap: 6px; width: 100%; padding: 8px 0 4px; border-top: 1px solid var(--panel-border); margin-top: 4px; }
+  .img-optimiser.open { display: flex; }
+  .img-optimiser-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .img-optimiser input[type="file"] { font-size: 10px; font-family: inherit; max-width: 180px; }
+  .img-optimiser input[type="text"] { font-size: 10px; font-family: inherit; padding: 3px 6px; border: 1px solid var(--panel-border); border-radius: 4px; width: 200px; background: #fff; color: var(--panel-text); }
+  .img-optimiser input[type="text"]::placeholder { color: var(--panel-muted); }
+  .optimiser-status { font-size: 9px; color: var(--panel-muted); font-style: italic; min-height: 12px; }
+  .layer-preview { display: flex; gap: 6px; align-items: flex-end; min-height: 48px; }
+  .layer-thumb { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .layer-thumb canvas, .layer-thumb .swatch { width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--panel-border); background: #fff; }
+  .layer-thumb .swatch { display: block; }
+  .layer-thumb span { font-size: 8px; color: var(--panel-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+
   /* ── Event Log ── */
   .event-log {
     position: fixed; top: 54px; left: 8px; z-index: 9998;
@@ -118,6 +132,17 @@
     </div>
   </div>
   <button class="btn-sm" id="resetDismiss">Reset Dismiss</button>
+  <button class="btn-sm" id="optimiserToggle">Image Optimiser</button>
+  <div class="img-optimiser" id="imgOptimiser">
+    <div class="img-optimiser-row">
+      <label style="font-size:10px;color:var(--panel-muted);font-weight:500;">Upload</label>
+      <input type="file" id="imgUpload" accept="image/*">
+      <label style="font-size:10px;color:var(--panel-muted);font-weight:500;margin-left:4px;">or URL</label>
+      <input type="text" id="imgUrl" placeholder="Paste image URL...">
+    </div>
+    <div class="optimiser-status" id="optimiserStatus"></div>
+    <div class="layer-preview" id="layerPreview"></div>
+  </div>
 </div>
 
 <!-- Event Log -->
@@ -427,6 +452,292 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
+     IMAGE LAYER DECOMPOSITION ENGINE
+     ══════════════════════════════════════════════════════════════ */
+
+  function extractDominantColor(ctx, w, h) {
+    // Sample 4 corners + centre, average the most common hue
+    var points = [[0,0],[w-1,0],[0,h-1],[w-1,h-1],[Math.floor(w/2),Math.floor(h/2)]];
+    var r = 0, g = 0, b = 0;
+    points.forEach(function(p) {
+      var px = ctx.getImageData(p[0], p[1], 1, 1).data;
+      r += px[0]; g += px[1]; b += px[2];
+    });
+    r = Math.round(r / 5); g = Math.round(g / 5); b = Math.round(b / 5);
+    return { css: 'rgb(' + r + ',' + g + ',' + b + ')', r: r, g: g, b: b };
+  }
+
+  function generateBlurPlate(sourceCanvas, w, h) {
+    // Downscale to 32px wide, then blur for a tiny background plate
+    var ratio = h / w;
+    var tw = 32, th = Math.round(32 * ratio);
+    var c = document.createElement('canvas');
+    c.width = tw; c.height = th;
+    var ctx = c.getContext('2d');
+    ctx.filter = 'blur(2px)';
+    ctx.drawImage(sourceCanvas, 0, 0, tw, th);
+    ctx.filter = 'none';
+    return { dataUrl: c.toDataURL('image/jpeg', 0.6), width: tw, height: th };
+  }
+
+  function morphClose(mask, w, h, radius) {
+    // Dilate then erode to close small gaps in the saliency mask
+    var r = radius || 2;
+    var temp = new Uint8Array(w * h);
+    var i, x, y, dx, dy, nx, ny, found;
+
+    // Dilate: if any neighbour is 255, set to 255
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        i = y * w + x;
+        found = false;
+        for (dy = -r; dy <= r && !found; dy++) {
+          for (dx = -r; dx <= r && !found; dx++) {
+            nx = x + dx; ny = y + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h && mask[ny * w + nx] === 255) found = true;
+          }
+        }
+        temp[i] = found ? 255 : 0;
+      }
+    }
+
+    // Erode: if any neighbour is 0, set to 0
+    var result = new Uint8Array(w * h);
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        i = y * w + x;
+        found = true;
+        for (dy = -r; dy <= r && found; dy++) {
+          for (dx = -r; dx <= r && found; dx++) {
+            nx = x + dx; ny = y + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h && temp[ny * w + nx] === 0) found = false;
+          }
+        }
+        result[i] = found ? 255 : 0;
+      }
+    }
+    return result;
+  }
+
+  function extractSubject(sourceCanvas, w, h) {
+    // Work at reduced resolution for performance
+    var scale = Math.min(1, 400 / Math.max(w, h));
+    var sw = Math.round(w * scale), sh = Math.round(h * scale);
+    var work = document.createElement('canvas');
+    work.width = sw; work.height = sh;
+    var wCtx = work.getContext('2d');
+    wCtx.drawImage(sourceCanvas, 0, 0, sw, sh);
+    var imgData = wCtx.getImageData(0, 0, sw, sh);
+    var px = imgData.data;
+
+    // Convert to luminance
+    var lum = new Float32Array(sw * sh);
+    for (var i = 0; i < sw * sh; i++) {
+      var off = i * 4;
+      lum[i] = 0.299 * px[off] + 0.587 * px[off + 1] + 0.114 * px[off + 2];
+    }
+
+    // Compute local contrast (8x8 block variance)
+    var bs = 8;
+    var contrast = new Float32Array(sw * sh);
+    for (var by = 0; by < sh; by += bs) {
+      for (var bx = 0; bx < sw; bx += bs) {
+        // Block mean
+        var sum = 0, count = 0;
+        for (var dy = 0; dy < bs && by + dy < sh; dy++) {
+          for (var dx = 0; dx < bs && bx + dx < sw; dx++) {
+            sum += lum[(by + dy) * sw + (bx + dx)];
+            count++;
+          }
+        }
+        var mean = sum / count;
+        // Block variance
+        var variance = 0;
+        for (var dy2 = 0; dy2 < bs && by + dy2 < sh; dy2++) {
+          for (var dx2 = 0; dx2 < bs && bx + dx2 < sw; dx2++) {
+            var diff = lum[(by + dy2) * sw + (bx + dx2)] - mean;
+            variance += diff * diff;
+          }
+        }
+        variance /= count;
+        // Assign contrast value to all pixels in block
+        for (var dy3 = 0; dy3 < bs && by + dy3 < sh; dy3++) {
+          for (var dx3 = 0; dx3 < bs && bx + dx3 < sw; dx3++) {
+            contrast[(by + dy3) * sw + (bx + dx3)] = variance;
+          }
+        }
+      }
+    }
+
+    // Find 75th percentile threshold
+    var sorted = Array.from(contrast).sort(function(a, b) { return a - b; });
+    var threshold = sorted[Math.floor(sorted.length * 0.75)];
+    // Ensure minimum threshold to avoid selecting everything
+    threshold = Math.max(threshold, 50);
+
+    // Binary mask
+    var mask = new Uint8Array(sw * sh);
+    for (var j = 0; j < sw * sh; j++) {
+      mask[j] = contrast[j] >= threshold ? 255 : 0;
+    }
+
+    // Morphological close to fill gaps
+    mask = morphClose(mask, sw, sh, 3);
+    mask = morphClose(mask, sw, sh, 2);
+
+    // Apply mask to original at full resolution
+    var out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    var oCtx = out.getContext('2d');
+    oCtx.drawImage(sourceCanvas, 0, 0);
+    var outData = oCtx.getImageData(0, 0, w, h);
+    var outPx = outData.data;
+
+    for (var oy = 0; oy < h; oy++) {
+      for (var ox = 0; ox < w; ox++) {
+        // Map to mask coordinates
+        var mx = Math.min(sw - 1, Math.round(ox * scale));
+        var my = Math.min(sh - 1, Math.round(oy * scale));
+        var alpha = mask[my * sw + mx];
+        outPx[(oy * w + ox) * 4 + 3] = alpha;
+      }
+    }
+
+    oCtx.putImageData(outData, 0, 0);
+    return out.toDataURL('image/png');
+  }
+
+  function decomposeImage(source) {
+    // source: HTMLImageElement or HTMLCanvasElement
+    var statusEl = document.getElementById('optimiserStatus');
+    var previewEl = document.getElementById('layerPreview');
+
+    statusEl.textContent = 'Decomposing layers...';
+    previewEl.innerHTML = '';
+
+    var w = source.naturalWidth || source.width;
+    var h = source.naturalHeight || source.height;
+
+    // Draw source to canvas
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(source, 0, 0);
+
+    var t0 = performance.now();
+
+    // Layer 0: Dominant color
+    var color = extractDominantColor(ctx, w, h);
+
+    // Layer 1: Blurred plate
+    var plate = generateBlurPlate(canvas, w, h);
+    var plateSize = Math.round(plate.dataUrl.length * 0.75); // approximate decoded bytes
+
+    // Layer 2: Subject cutout
+    statusEl.textContent = 'Extracting subject...';
+
+    // Use requestAnimationFrame to avoid blocking UI
+    requestAnimationFrame(function() {
+      var cutoutDataUrl = extractSubject(canvas, w, h);
+      var cutoutSize = Math.round(cutoutDataUrl.length * 0.75);
+
+      var elapsed = (performance.now() - t0).toFixed(0);
+
+      // Store layers in state
+      state.optimizedLayers = {
+        dominantColor: color.css,
+        blurPlate: plate.dataUrl,
+        cutout: cutoutDataUrl,
+        sourceWidth: w,
+        sourceHeight: h,
+      };
+
+      // Build layer preview thumbnails
+      previewEl.innerHTML = '';
+
+      // Thumb 0: Color swatch
+      var t0El = document.createElement('div');
+      t0El.className = 'layer-thumb';
+      var swatch = document.createElement('div');
+      swatch.className = 'swatch';
+      swatch.style.backgroundColor = color.css;
+      t0El.appendChild(swatch);
+      var t0Label = document.createElement('span');
+      t0Label.textContent = 'Color';
+      t0El.appendChild(t0Label);
+      previewEl.appendChild(t0El);
+
+      // Thumb 1: Blur plate
+      var t1El = document.createElement('div');
+      t1El.className = 'layer-thumb';
+      var t1Img = document.createElement('img');
+      t1Img.src = plate.dataUrl;
+      t1Img.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--panel-border);';
+      t1El.appendChild(t1Img);
+      var t1Label = document.createElement('span');
+      t1Label.textContent = 'Blur ' + (plateSize / 1024).toFixed(1) + 'KB';
+      t1El.appendChild(t1Label);
+      previewEl.appendChild(t1El);
+
+      // Thumb 2: Cutout
+      var t2El = document.createElement('div');
+      t2El.className = 'layer-thumb';
+      var t2Img = document.createElement('img');
+      t2Img.src = cutoutDataUrl;
+      t2Img.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--panel-border);background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/8px 8px;';
+      t2El.appendChild(t2Img);
+      var t2Label = document.createElement('span');
+      t2Label.textContent = 'Subject ' + (cutoutSize / 1024).toFixed(1) + 'KB';
+      t2El.appendChild(t2Label);
+      previewEl.appendChild(t2El);
+
+      statusEl.textContent = 'Decomposed in ' + elapsed + 'ms — 3 layers extracted';
+      console.log('[ImageOptimiser] Layers: color=' + color.css + ', plate=' + (plateSize/1024).toFixed(1) + 'KB, cutout=' + (cutoutSize/1024).toFixed(1) + 'KB, time=' + elapsed + 'ms');
+
+      // Re-render banners with new layers
+      render();
+    });
+  }
+
+  function applyLayersToBanner(shadow, zone) {
+    if (!state.optimizedLayers) return;
+    var layers = state.optimizedLayers;
+    var imgEl = shadow.querySelector('.breakout-img');
+    if (!imgEl) return;
+
+    // Clear existing content
+    imgEl.innerHTML = '';
+    imgEl.style.opacity = '1';
+    imgEl.style.mixBlendMode = 'normal';
+
+    // Layer 0: Dominant color background
+    imgEl.style.backgroundColor = layers.dominantColor;
+
+    // Layer 1: Blurred plate
+    imgEl.style.backgroundImage = 'url(' + layers.blurPlate + ')';
+    imgEl.style.backgroundSize = 'cover';
+    imgEl.style.backgroundPosition = 'center';
+
+    // Layer 2: Subject cutout with crossfade
+    var cutImg = document.createElement('img');
+    cutImg.src = layers.cutout;
+    cutImg.alt = 'Optimised subject layer';
+    cutImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.15s ease;z-index:1;';
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      cutImg.style.transition = 'none';
+    }
+
+    if (cutImg.complete && cutImg.naturalWidth > 0) {
+      cutImg.style.opacity = '1';
+    } else {
+      cutImg.addEventListener('load', function() { cutImg.style.opacity = '1'; });
+    }
+
+    imgEl.appendChild(cutImg);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
      SIDE PANEL — Right edge, breakout athlete, Nike-style
      ══════════════════════════════════════════════════════════════ */
   function createSidePanel() {
@@ -624,11 +935,15 @@
       </div>`;
 
     // Energy streaks
-    // Inject optimized athlete image into breakout container
-    var sideBreakoutImg = shadow.querySelector('.breakout-img');
-    if (sideBreakoutImg) {
-      var athleteImg = createOptimizedImage('athlete-hero', 'zPYFHQYGp4eCapgYx3Rqd0mPlvJY', 'Athlete breakout', '', 400, 533);
-      sideBreakoutImg.appendChild(athleteImg);
+    // Apply uploaded image layers or fallback to default optimized image
+    if (state.optimizedLayers) {
+      applyLayersToBanner(shadow, 'side');
+    } else {
+      var sideBreakoutImg = shadow.querySelector('.breakout-img');
+      if (sideBreakoutImg) {
+        var athleteImg = createOptimizedImage('athlete-hero', 'zPYFHQYGp4eCapgYx3Rqd0mPlvJY', 'Athlete breakout', '', 400, 533);
+        sideBreakoutImg.appendChild(athleteImg);
+      }
     }
 
     const ath = shadow.querySelector('.athlete');
@@ -889,11 +1204,15 @@
 
     // Parallax on product — rAF throttled
     const banner = shadow.querySelector('.banner');
-    // Inject optimized product image into breakout container
-    var footBreakoutImg = shadow.querySelector('.breakout-img');
-    if (footBreakoutImg) {
-      var productImg = createOptimizedImage('product-hero', 'iigKHYY2d4d2eIiAe5h3iieHgHIH', 'Product breakout', '', 400, 267);
-      footBreakoutImg.appendChild(productImg);
+    // Apply uploaded image layers or fallback to default optimized image
+    if (state.optimizedLayers) {
+      applyLayersToBanner(shadow, 'footer');
+    } else {
+      var footBreakoutImg = shadow.querySelector('.breakout-img');
+      if (footBreakoutImg) {
+        var productImg = createOptimizedImage('product-hero', 'iigKHYY2d4d2eIiAe5h3iieHgHIH', 'Product breakout', '', 400, 267);
+        footBreakoutImg.appendChild(productImg);
+      }
     }
 
     const bk = shadow.querySelector('.breakout');
@@ -948,6 +1267,39 @@
   document.getElementById('resetDismiss').addEventListener('click', () => {
     try { localStorage.removeItem('ff_ad_dismissed_footer'); localStorage.removeItem('ff_ad_dismissed_side'); } catch {}
     state.dismissed = { footer: false, side: false }; render();
+  });
+
+  /* ══ IMAGE OPTIMISER WIRING ══ */
+  document.getElementById('optimiserToggle').addEventListener('click', function() {
+    document.getElementById('imgOptimiser').classList.toggle('open');
+  });
+
+  document.getElementById('imgUpload').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    var statusEl = document.getElementById('optimiserStatus');
+    statusEl.textContent = 'Loading image...';
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() { decomposeImage(img); };
+      img.onerror = function() { statusEl.textContent = 'Failed to load image.'; };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('imgUrl').addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var url = e.target.value.trim();
+    if (!url) return;
+    var statusEl = document.getElementById('optimiserStatus');
+    statusEl.textContent = 'Fetching image...';
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() { decomposeImage(img); };
+    img.onerror = function() { statusEl.textContent = 'Failed to load — CORS may be blocking. Try downloading and uploading instead.'; };
+    img.src = url;
   });
 
   render();
