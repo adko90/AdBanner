@@ -1,0 +1,157 @@
+{
+  "generated": "2026-03-21T19:45:12.762Z",
+  "images": [
+    {
+      "name": "athlete-hero",
+      "source": "athlete-hero.jpg",
+      "originalSize": 67556,
+      "width": 1200,
+      "height": 1600,
+      "thumbhash": "zPYFHQYGp4eCapgYx3Rqd0mPlvJY",
+      "variants": [
+        {
+          "tier": "mobile",
+          "format": "avif",
+          "file": "athlete-hero-400w.avif",
+          "width": 400,
+          "height": 533,
+          "quality": 40,
+          "ssim": 0.9982,
+          "size": 1179,
+          "under100KB": true
+        },
+        {
+          "tier": "mobile",
+          "format": "webp",
+          "file": "athlete-hero-400w.webp",
+          "width": 400,
+          "height": 533,
+          "quality": 40,
+          "ssim": 0.9969,
+          "size": 1860,
+          "under100KB": true
+        },
+        {
+          "tier": "mobile",
+          "format": "jpeg",
+          "file": "athlete-hero-400w.jpg",
+          "width": 400,
+          "height": 533,
+          "quality": 40,
+          "ssim": 0.9965,
+          "size": 2898,
+          "under100KB": true
+        },
+        {
+          "tier": "desktop",
+          "format": "avif",
+          "file": "athlete-hero-760w.avif",
+          "width": 760,
+          "height": 1013,
+          "quality": 40,
+          "ssim": 0.9989,
+          "size": 1789,
+          "under100KB": true
+        },
+        {
+          "tier": "desktop",
+          "format": "webp",
+          "file": "athlete-hero-760w.webp",
+          "width": 760,
+          "height": 1013,
+          "quality": 40,
+          "ssim": 0.9983,
+          "size": 4438,
+          "under100KB": true
+        },
+        {
+          "tier": "desktop",
+          "format": "jpeg",
+          "file": "athlete-hero-760w.jpg",
+          "width": 760,
+          "height": 1013,
+          "quality": 40,
+          "ssim": 0.9977,
+          "size": 6608,
+          "under100KB": true
+        }
+      ]
+    },
+    {
+      "name": "product-hero",
+      "source": "product-hero.jpg",
+      "originalSize": 57280,
+      "width": 1200,
+      "height": 800,
+      "thumbhash": "iigKHYY2d4d2eIiAe5h3iieHgHIH",
+      "variants": [
+        {
+          "tier": "mobile",
+          "format": "avif",
+          "file": "product-hero-400w.avif",
+          "width": 400,
+          "height": 267,
+          "quality": 40,
+          "ssim": 0.999,
+          "size": 1168,
+          "under100KB": true
+        },
+        {
+          "tier": "mobile",
+          "format": "webp",
+          "file": "product-hero-400w.webp",
+          "width": 400,
+          "height": 267,
+          "quality": 40,
+          "ssim": 0.9987,
+          "size": 1628,
+          "under100KB": true
+        },
+        {
+          "tier": "mobile",
+          "format": "jpeg",
+          "file": "product-hero-400w.jpg",
+          "width": 400,
+          "height": 267,
+          "quality": 40,
+          "ssim": 0.9978,
+          "size": 2585,
+          "under100KB": true
+        },
+        {
+          "tier": "desktop",
+          "format": "avif",
+          "file": "product-hero-760w.avif",
+          "width": 760,
+          "height": 507,
+          "quality": 40,
+          "ssim": 0.9994,
+          "size": 1820,
+          "under100KB": true
+        },
+        {
+          "tier": "desktop",
+          "format": "webp",
+          "file": "product-hero-760w.webp",
+          "width": 760,
+          "height": 507,
+          "quality": 40,
+          "ssim": 0.9991,
+          "size": 3534,
+          "under100KB": true
+        },
+        {
+          "tier": "desktop",
+          "format": "jpeg",
+          "file": "product-hero-760w.jpg",
+          "width": 760,
+          "height": 507,
+          "quality": 40,
+          "ssim": 0.9987,
+          "size": 5264,
+          "under100KB": true
+        }
+      ]
+    }
+  ]
+}

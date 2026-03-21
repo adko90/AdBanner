@@ -3,1085 +3,1306 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Interactive Ad System — MVP Demo</title>
+<title>Interactive Ad System — Breakout Design</title>
+<!-- REQ-011: Preload LCP hero images (AVIF primary, WebP fallback) -->
+<link rel="preload" as="image" type="image/avif" href="images/optimized/athlete-hero-760w.avif" media="(min-width:768px)" fetchpriority="high">
+<link rel="preload" as="image" type="image/avif" href="images/optimized/athlete-hero-400w.avif" media="(max-width:767px)" fetchpriority="high">
+<link rel="preload" as="image" type="image/avif" href="images/optimized/product-hero-760w.avif" media="(min-width:768px)">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
+    --accent: #ff3b30;
+    --accent-glow: rgba(255,59,48,0.4);
     --panel-bg: #f5f5f7;
     --panel-border: #d2d2d7;
     --panel-text: #1d1d1f;
     --panel-muted: #86868b;
   }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
     background: #f2f2f7;
     min-height: 300vh;
     color: var(--panel-text);
   }
 
-  /* ── Builder Config Panel ── */
+  /* ── Config Panel ── */
   .config-panel {
-    position: sticky; top: 0; z-index: 100;
+    position: sticky; top: 0; z-index: 9999;
     background: rgba(245,245,247,0.92);
     border-bottom: 1px solid var(--panel-border);
     padding: 10px 16px;
     display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
     -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   }
-  .config-panel h1 { font-size: 12px; font-weight: 600; color: var(--panel-muted); }
+  .config-panel h1 { font-size: 12px; font-weight: 600; color: var(--panel-muted); text-transform: uppercase; letter-spacing: 0.5px; }
   .config-group { display: flex; align-items: center; gap: 4px; }
-  .config-group select { font-size: 11px; padding: 3px 6px; border: 1px solid var(--panel-border); border-radius: 5px; background: #fff; font-family: inherit; cursor: pointer; }
-  .config-group input[type="color"] { width: 24px; height: 20px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
+  .config-group label { font-size: 10px; color: var(--panel-muted); font-weight: 500; }
   .tg { display: flex; gap: 1px; background: #e8e8ed; border-radius: 5px; padding: 2px; }
   .tg button { font-size: 10px; font-weight: 500; padding: 3px 8px; border: none; border-radius: 3px; background: transparent; color: var(--panel-muted); cursor: pointer; font-family: inherit; transition: all 0.12s; }
   .tg button.active { background: #fff; color: var(--panel-text); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
   .btn-sm { font-size: 10px; padding: 3px 8px; border: 1px solid var(--panel-border); border-radius: 5px; background: #fff; cursor: pointer; font-family: inherit; color: var(--panel-muted); }
+  .btn-sm:hover { background: #f0f0f0; }
+  .config-group input[type="color"] { width: 24px; height: 20px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
 
-  /* ── Publisher page ── */
-  .page-header { background: #1a1a1a; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
-  .page-header .logo { font-size: 22px; font-weight: 900; color: #0a0; letter-spacing: -1px; }
-  .page-header nav { display: flex; gap: 14px; }
-  .page-header nav a { color: #aaa; text-decoration: none; font-size: 12px; font-weight: 500; }
-  .article { max-width: 660px; margin: 0 auto; padding: 28px 24px 200px; }
-  .article h1 { font-size: 26px; font-weight: 700; line-height: 1.25; margin-bottom: 10px; color: #1a1a1a; }
-  .article .meta { font-size: 12px; color: #888; margin-bottom: 18px; }
-  .article .meta a { color: #0a0; text-decoration: none; }
-  .article p { font-size: 16px; line-height: 1.7; color: #333; margin-bottom: 18px; }
-  .article blockquote { border-left: 3px solid #0a0; padding: 10px 18px; margin: 20px 0; font-style: italic; color: #555; background: #f8f8f8; border-radius: 0 6px 6px 0; }
-  .hero-img { width: 100%; height: 200px; border-radius: 8px; background: linear-gradient(135deg, #667eea, #764ba2); margin-bottom: 18px; }
+  /* ── Image Optimiser Panel ── */
+  .img-optimiser { display: none; flex-direction: column; gap: 6px; width: 100%; padding: 8px 0 4px; border-top: 1px solid var(--panel-border); margin-top: 4px; }
+  .img-optimiser.open { display: flex; }
+  .img-optimiser-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .img-optimiser input[type="file"] { font-size: 10px; font-family: inherit; max-width: 180px; }
+  .img-optimiser input[type="text"] { font-size: 10px; font-family: inherit; padding: 3px 6px; border: 1px solid var(--panel-border); border-radius: 4px; width: 200px; background: #fff; color: var(--panel-text); }
+  .img-optimiser input[type="text"]::placeholder { color: var(--panel-muted); }
+  .optimiser-status { font-size: 9px; color: var(--panel-muted); font-style: italic; min-height: 12px; }
+  .layer-preview { display: flex; gap: 6px; align-items: flex-end; min-height: 48px; }
+  .layer-thumb { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .layer-thumb canvas, .layer-thumb .swatch { width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--panel-border); background: #fff; }
+  .layer-thumb .swatch { display: block; }
+  .layer-thumb span { font-size: 8px; color: var(--panel-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
 
-  /* ── Event log ── */
+  /* ── Event Log ── */
   .event-log {
-    position: fixed; top: 48px; left: 8px; width: 200px; max-height: 140px;
-    overflow-y: auto; background: rgba(0,0,0,0.82); color: #0f0;
-    font-family: 'SF Mono', Monaco, monospace; font-size: 9px;
-    padding: 5px; border-radius: 5px; z-index: 101; pointer-events: none; opacity: 0.6;
+    position: fixed; top: 54px; left: 8px; z-index: 9998;
+    background: rgba(0,0,0,0.75); color: #0f0; font-size: 9px; font-family: 'SF Mono', monospace;
+    padding: 6px 8px; border-radius: 6px; max-height: 120px; overflow-y: auto; width: 220px;
+    pointer-events: none; line-height: 1.4;
   }
-  .event-log div { padding: 1px 0; }
+
+  /* ── Publisher Page ── */
+  .page-header { background: #0a0a0a; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .page-header .logo { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -1px; }
+  .page-header .logo span { color: var(--accent); }
+  .page-header nav { display: flex; gap: 14px; }
+  .page-header nav a { color: #888; text-decoration: none; font-size: 12px; font-weight: 500; }
+  .article { max-width: 680px; margin: 0 auto; padding: 32px 24px 240px; }
+  .article h1 { font-size: 28px; font-weight: 700; line-height: 1.25; margin-bottom: 10px; }
+  .article .meta { font-size: 12px; color: #888; margin-bottom: 18px; }
+  .article .meta a { color: var(--accent); text-decoration: none; }
+  .article p { font-size: 16px; line-height: 1.7; color: #444; margin-bottom: 18px; }
+  .article blockquote { border-left: 3px solid var(--accent); padding: 10px 18px; margin: 20px 0; font-style: italic; color: #555; background: #f8f8f8; border-radius: 0 6px 6px 0; }
+  .article .img-placeholder { width: 100%; height: 200px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; margin: 24px 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 500; }
+
+  /* REQ-003, REQ-010, REQ-017: ThumbHash placeholder + crossfade, intrinsic sizing, zero CLS */
+  .hero-img-wrap {
+    position: relative; width: 100%; aspect-ratio: 3/2; border-radius: 12px; margin: 24px 0;
+    overflow: hidden; background-size: cover; background-position: center;
+  }
+  .hero-img-wrap picture { display: block; width: 100%; height: 100%; }
+  .hero-img-wrap img {
+    width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .hero-img-wrap img.loaded { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-img-wrap img { transition: none; }
+    .hero-img-wrap img.loaded { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ── Config Panel ── -->
+<!-- Config Panel -->
 <div class="config-panel">
-  <h1>Ad Builder</h1>
+  <h1>Ad System</h1>
   <div class="config-group">
-    <select id="presetSelect">
-      <option value="capsule">Capsule</option>
-      <option value="angled">Angled</option>
-      <option value="signature">Signature</option>
-    </select>
-  </div>
-  <div class="config-group">
+    <label>Mode</label>
     <div class="tg" id="modeToggle">
-      <button data-mode="solid">Solid</button>
-      <button data-mode="glass" class="active">Glass</button>
+      <button class="active" data-mode="solid">Solid</button>
+      <button data-mode="glass">Glass</button>
     </div>
   </div>
   <div class="config-group">
-    <input type="color" id="accentColor" value="#6C5CE7">
-  </div>
-  <div class="config-group">
-    <div class="tg" id="enableToggle">
-      <button data-enabled="true" class="active">On</button>
-      <button data-enabled="false">Off</button>
+    <label>Shape</label>
+    <div class="tg" id="presetToggle">
+      <button class="active" data-preset="capsule">Capsule</button>
+      <button data-preset="angled">Angled</button>
+      <button data-preset="signature">Wave</button>
     </div>
   </div>
-  <button class="btn-sm" id="resetDismiss">Reset All</button>
+  <div class="config-group">
+    <label>Accent</label>
+    <input type="color" id="accentPicker" value="#ff3b30">
+  </div>
+  <div class="config-group">
+    <div class="tg" id="adToggle">
+      <button class="active" data-state="on">On</button>
+      <button data-state="off">Off</button>
+    </div>
+  </div>
+  <button class="btn-sm" id="resetDismiss">Reset Dismiss</button>
+  <button class="btn-sm" id="optimiserToggle">Image Optimiser</button>
+  <div class="img-optimiser" id="imgOptimiser">
+    <div class="img-optimiser-row">
+      <label style="font-size:10px;color:var(--panel-muted);font-weight:500;">Upload</label>
+      <input type="file" id="imgUpload" accept="image/*">
+      <label style="font-size:10px;color:var(--panel-muted);font-weight:500;margin-left:4px;">or URL</label>
+      <input type="text" id="imgUrl" placeholder="Paste image URL...">
+    </div>
+    <div class="optimiser-status" id="optimiserStatus"></div>
+    <div class="layer-preview" id="layerPreview"></div>
+  </div>
 </div>
 
-<div class="event-log" id="eventLog"></div>
+<!-- Event Log -->
+<div class="event-log" id="eventLog">Ad Events:</div>
 
-<!-- ── Publisher Page ── -->
+<!-- Publisher Page -->
 <div class="page-header">
-  <div class="logo">TC</div>
-  <nav><a href="#">AI</a><a href="#">Startups</a><a href="#">Venture</a><a href="#">Security</a></nav>
+  <div class="logo">Tech<span>Pulse</span></div>
+  <nav><a href="#">AI</a><a href="#">Startups</a><a href="#">Enterprise</a><a href="#">Markets</a></nav>
 </div>
-
 <article class="article">
-  <h1>Building Enterprise AI Agent Platforms Has Become the Industry's Obsession</h1>
-  <div class="meta">By <a href="#">Sarah Chen</a> &middot; March 21, 2026 &middot; 6 min read</div>
-  <div class="hero-img"></div>
-  <p>Building enterprise AI agent platforms has become the du jour obsession of the AI space in recent months. Every major cloud provider, from Microsoft to Google to AWS, is racing to build the definitive platform for enterprises to deploy autonomous agents.</p>
-  <p>OpenAI launched Frontier, its open platform for enterprises to build and manage AI agents, in February. In December, global research firm Gartner released a report about how governance platforms for AI agents would be the crucial infrastructure needed for enterprises to adopt the tech.</p>
-  <blockquote>"OpenClaw gave us, gave the industry exactly what it needed at exactly the time it needed it."</blockquote>
-  <p>The market for AI agent platforms is expected to reach $47 billion by 2028, according to recent estimates. This growth is driven by enterprises seeking to automate complex workflows that previously required human decision-making.</p>
-  <p>Nvidia clearly got the message. The chipmaker announced its own agent development kit at GTC last week, positioning itself not just as a hardware provider but as a full-stack AI platform company.</p>
-  <p>The implications for the enterprise software market are profound. Traditional SaaS vendors are scrambling to add agent capabilities to their existing platforms, while startups are building agent-first architectures from the ground up.</p>
-  <p>Security remains the biggest concern. When autonomous agents can access company data, make API calls, and trigger workflows, the attack surface expands dramatically. Several startups are already building "agent firewalls" — middleware that monitors and controls agent behavior in real-time.</p>
-  <p>The race is on, and the next 18 months will determine which platforms become the foundational infrastructure for the agent era.</p>
+  <h1>The Future of Interactive Advertising: Beyond the Banner</h1>
+  <div class="meta">By <a href="#">Sarah Chen</a> · March 21, 2026 · 8 min read</div>
+  <p>The advertising industry is undergoing a fundamental transformation. As consumers grow increasingly blind to traditional banner ads, brands are turning to interactive, immersive formats that demand attention through engagement rather than interruption.</p>
+  <!-- REQ-001/002/004/005/006/009/010/011/012: ThumbHash placeholder + AVIF/WebP/JPEG cascade + srcset -->
+  <div class="hero-img-wrap" data-thumbhash="zPYFHQYGp4eCapgYx3Rqd0mPlvJY">
+    <picture>
+      <source type="image/avif"
+              srcset="images/optimized/athlete-hero-400w.avif 400w, images/optimized/athlete-hero-760w.avif 760w"
+              sizes="(min-width:768px) 680px, 100vw">
+      <source type="image/webp"
+              srcset="images/optimized/athlete-hero-400w.webp 400w, images/optimized/athlete-hero-760w.webp 760w"
+              sizes="(min-width:768px) 680px, 100vw">
+      <img src="images/optimized/athlete-hero-760w.jpg"
+           srcset="images/optimized/athlete-hero-400w.jpg 400w, images/optimized/athlete-hero-760w.jpg 760w"
+           sizes="(min-width:768px) 680px, 100vw"
+           width="760" height="1013"
+           alt="Athlete in dynamic action pose"
+           decoding="async" fetchpriority="high">
+    </picture>
+  </div>
+  <p>Nike's #BleedBlue campaign demonstrated that when advertising breaks free from rectangular constraints and embraces bold, boundary-defying visuals, engagement rates soar. The campaign's imagery of athletes literally bursting through ad boundaries became iconic.</p>
+  <blockquote>"The best ads don't feel like ads. They feel like experiences that happen to have a brand attached." — Nike Creative Director</blockquote>
+  <p>BMW took a different approach with their interactive color configurator, letting users explore vehicle options directly within the ad unit. This tactile interaction increased time-on-ad by 340% compared to static banners.</p>
+  <p>The key insight from these campaigns is that interactivity must serve the brand story, not just add novelty. When a user can engage with the product — rotate it, customize it, explore it — the ad becomes a micro-experience that builds genuine purchase intent.</p>
+  <p>Looking ahead, the convergence of WebGL, CSS Houdini, and machine learning will enable ads that adapt in real-time to user behavior, ambient conditions, and contextual signals. The rectangular banner is dead. Long live the interactive experience.</p>
+  <p>Publishers who embrace these formats are seeing 5-8x higher CPMs and significantly improved reader sentiment scores. The trade-off — slightly more screen real estate — is offset by the quality of engagement and the premium brands willing to pay for it.</p>
 </article>
 
 <script>
 (function() {
   'use strict';
 
-  const CONFIG = {
-    preset: 'capsule',
-    mode: 'glass',
-    accent: '#6C5CE7',
-    enabled: true,
-    dismissKey: 'ff_dismissed_',
-    dismissCooldown: 24 * 60 * 60 * 1000
-  };
+  /* ══ STATE ══ */
+  let state = { mode: 'solid', preset: 'capsule', accent: '#ff3b30', enabled: true, dismissed: { footer: false, side: false } };
 
-  // ── QR Code Generator (lightweight, no dependency) ──
-  // Generates a simple QR-like SVG pattern. For production, use a real QR lib.
-  function generateQR(data, size) {
-    // Create a deterministic pattern from the data string
-    const cells = 21;
-    const cellSize = size / cells;
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) { hash = ((hash << 5) - hash + data.charCodeAt(i)) | 0; }
+  /* ══ HELPERS ══ */
+  const logEl = document.getElementById('eventLog');
+  function logEvent(name, detail) {
+    window.dispatchEvent(new CustomEvent(name, { detail: { ...detail, timestamp: Date.now() } }));
+    const d = document.createElement('div');
+    d.textContent = new Date().toLocaleTimeString() + ' ' + name.replace('ff:ad:', '');
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function isDismissed(z) { try { const r = localStorage.getItem('ff_ad_dismissed_' + z); return r && (Date.now() - parseInt(r)) < 86400000; } catch { return false; } }
+  function setDismissed(z) { try { localStorage.setItem('ff_ad_dismissed_' + z, Date.now().toString()); } catch {} state.dismissed[z] = true; }
+  function hexRgba(h, a) { return 'rgba(' + parseInt(h.slice(1,3),16) + ',' + parseInt(h.slice(3,5),16) + ',' + parseInt(h.slice(5,7),16) + ',' + a + ')'; }
+  function darken(h, f) { return 'rgb(' + Math.round(parseInt(h.slice(1,3),16)*f) + ',' + Math.round(parseInt(h.slice(3,5),16)*f) + ',' + Math.round(parseInt(h.slice(5,7),16)*f) + ')'; }
 
-    let rects = '';
-    const seed = Math.abs(hash);
+  /* ══ ThumbHash decode — REQ-001/002 ══
+   * Minimal ThumbHash decoder (base64 → RGBA → canvas → dataURL).
+   * Runs in < 0.5ms on modern hardware. */
+  function thumbHashToDataURL(base64) {
+    var bin = atob(base64);
+    var hash = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) hash[i] = bin.charCodeAt(i);
 
-    // Fixed finder patterns (top-left, top-right, bottom-left)
-    const drawFinder = (ox, oy) => {
-      for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) {
-        const on = r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4);
-        if (on) rects += `<rect x="${(ox+c)*cellSize}" y="${(oy+r)*cellSize}" width="${cellSize}" height="${cellSize}" fill="white"/>`;
+    // Decode header
+    var header = hash[0] | (hash[1] << 8) | (hash[2] << 16);
+    var l_dc = header & 63, p_dc = (header >> 6) & 63, q_dc = (header >> 12) & 63;
+    var l_scale = (header >> 18) & 31, hasAlpha = (header >> 23) & 1;
+    var p_scale = (hash[3] & 63), q_scale = ((hash[3] >> 6) | ((hash[4] & 3) << 2));
+    var isLandscape = (hash[4] >> 7) & 1;
+    var lx = Math.max(3, isLandscape ? (hasAlpha ? 5 : 7) : ((hash[4] >> 2) & 7) + 3);
+    var ly = Math.max(3, isLandscape ? ((hash[4] >> 2) & 7) + 3 : (hasAlpha ? 5 : 7));
+    var a_dc = hasAlpha ? (hash[5] & 15) : 15;
+    var a_scale = hasAlpha ? (hash[5] >> 4) : 0;
+
+    // Decode AC coefficients
+    var ac_start = hasAlpha ? 6 : 5;
+    var ac_idx = 0;
+    function decode_ac(nx, ny, scale) {
+      var result = [];
+      for (var cy = 0; cy < ny; cy++) {
+        for (var cx = (cy === 0 ? 1 : 0); cx * ny < nx * (ny - cy); cx++) {
+          var bit_idx = ac_start * 8 + ac_idx * 4;
+          var byte_idx = bit_idx >> 3;
+          var bit_off = bit_idx & 7;
+          var val = ((hash[byte_idx] >> bit_off) | (byte_idx + 1 < hash.length ? hash[byte_idx + 1] << (8 - bit_off) : 0)) & 15;
+          result.push(((val + 0.5) / 16 - 0.5) * scale);
+          ac_idx++;
+        }
       }
-    };
-    drawFinder(0, 0);
-    drawFinder(cells - 7, 0);
-    drawFinder(0, cells - 7);
+      return result;
+    }
 
-    // Data modules (pseudo-random from hash)
-    let s = seed;
-    for (let r = 0; r < cells; r++) for (let c = 0; c < cells; c++) {
-      // Skip finder areas
-      if ((r < 8 && c < 8) || (r < 8 && c > cells-9) || (r > cells-9 && c < 8)) continue;
-      s = (s * 16807 + 1) & 0x7FFFFFFF;
-      if (s % 3 !== 0) {
-        rects += `<rect x="${c*cellSize}" y="${r*cellSize}" width="${cellSize}" height="${cellSize}" fill="white" rx="0.3"/>`;
+    var l_ac = decode_ac(lx, ly, l_scale);
+    var p_ac = decode_ac(3, 3, p_scale);
+    var q_ac = decode_ac(3, 3, q_scale);
+    var a_ac = hasAlpha ? decode_ac(5, 5, a_scale) : [];
+
+    // Render to pixels
+    var ratio = isLandscape ? 32 : 32;
+    var w = Math.round(isLandscape ? ratio : Math.round(ratio * lx / ly));
+    var h2 = Math.round(isLandscape ? Math.round(ratio * ly / lx) : ratio);
+    var pixels = new Uint8Array(w * h2 * 4);
+
+    var l_dc_f = (l_dc + 0.5) / 63;
+    var p_dc_f = (p_dc + 0.5) / 31 - 1;
+    var q_dc_f = (q_dc + 0.5) / 31 - 1;
+    var a_dc_f = (a_dc + 0.5) / 15;
+
+    var cosX_l = new Float32Array(lx);
+    var cosX_p = new Float32Array(3);
+    var cosX_q = new Float32Array(3);
+    var cosX_a = hasAlpha ? new Float32Array(5) : null;
+
+    for (var y = 0; y < h2; y++) {
+      for (var x = 0; x < w; x++) {
+        var fx = (x + 0.5) / w;
+        var fy = (y + 0.5) / h2;
+
+        // L channel
+        var j;
+        for (j = 0; j < lx; j++) cosX_l[j] = Math.cos(Math.PI * fx * j);
+        for (j = 0; j < 3; j++) cosX_p[j] = Math.cos(Math.PI * fx * j);
+        for (j = 0; j < 3; j++) cosX_q[j] = Math.cos(Math.PI * fx * j);
+        if (hasAlpha) for (j = 0; j < 5; j++) cosX_a[j] = Math.cos(Math.PI * fx * j);
+
+        var l = l_dc_f, p = p_dc_f, q = q_dc_f, a = a_dc_f;
+        var li = 0, pi = 0, qi = 0, ai = 0;
+
+        for (var cy = 0; cy < ly; cy++) {
+          var cosY = Math.cos(Math.PI * fy * cy);
+          for (var cx = (cy === 0 ? 1 : 0); cx * ly < lx * (ly - cy); cx++) {
+            l += l_ac[li++] * cosX_l[cx] * cosY;
+          }
+        }
+        for (var cy2 = 0; cy2 < 3; cy2++) {
+          var cosY2 = Math.cos(Math.PI * fy * cy2);
+          for (var cx2 = (cy2 === 0 ? 1 : 0); cx2 < 3 - cy2; cx2++) {
+            p += p_ac[pi++] * cosX_p[cx2] * cosY2;
+            q += q_ac[qi++] * cosX_q[cx2] * cosY2;
+          }
+        }
+        if (hasAlpha) {
+          for (var cy3 = 0; cy3 < 5; cy3++) {
+            var cosY3 = Math.cos(Math.PI * fy * cy3);
+            for (var cx3 = (cy3 === 0 ? 1 : 0); cx3 < 5 - cy3; cx3++) {
+              a += a_ac[ai++] * cosX_a[cx3] * cosY3;
+            }
+          }
+        }
+
+        var b = l - 2 / 3 * p;
+        var r2 = (3 * l - b + q) / 2;
+        var g = r2 - q;
+        var off = (y * w + x) * 4;
+        pixels[off]     = Math.max(0, Math.min(255, Math.round(r2 * 255)));
+        pixels[off + 1] = Math.max(0, Math.min(255, Math.round(g * 255)));
+        pixels[off + 2] = Math.max(0, Math.min(255, Math.round(b * 255)));
+        pixels[off + 3] = Math.max(0, Math.min(255, Math.round(a * 255)));
       }
     }
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><rect width="${size}" height="${size}" fill="transparent" rx="4"/>${rects}</svg>`;
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h2;
+    var ctx = canvas.getContext('2d');
+    var imgData = ctx.createImageData(w, h2);
+    imgData.data.set(pixels);
+    ctx.putImageData(imgData, 0, 0);
+    return canvas.toDataURL();
   }
 
-  // ── Events ──
-  function emitEvent(name, zone, detail) {
-    const payload = { zone, presetId: CONFIG.preset, mode: CONFIG.mode, timestamp: Date.now(), ...detail };
-    window.dispatchEvent(new CustomEvent(`ff:ad:${name}`, { detail: payload }));
-    logEvent(`${zone}:${name}`);
+  /* ══ REQ-013: Network-aware quality selection ══ */
+  function shouldLoadImages() {
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!conn) return 'full'; // no API = assume good connection
+    var ect = conn.effectiveType;
+    if (ect === 'slow-2g' || ect === '2g') return 'thumbhash-only';
+    if (ect === '3g') return 'mobile';
+    return 'full';
   }
 
-  function logEvent(name) {
-    const log = document.getElementById('eventLog');
-    if (!log) return;
-    const entry = document.createElement('div');
-    const t = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    entry.textContent = `${t} ${name}`;
-    log.prepend(entry);
-    while (log.children.length > 15) log.removeChild(log.lastChild);
+  /* ══ ThumbHash init — decode all placeholders on page ══ */
+  function initThumbHashes() {
+    var t0 = performance.now();
+    var wraps = document.querySelectorAll('[data-thumbhash]');
+    var quality = shouldLoadImages();
+
+    wraps.forEach(function(wrap) {
+      var hash = wrap.getAttribute('data-thumbhash');
+      if (!hash) return;
+
+      // Decode ThumbHash to blurred background
+      var dataUrl = thumbHashToDataURL(hash);
+      wrap.style.backgroundImage = 'url(' + dataUrl + ')';
+
+      // REQ-013: On 2g, skip loading real images
+      if (quality === 'thumbhash-only') {
+        var imgs = wrap.querySelectorAll('img');
+        imgs.forEach(function(img) { img.removeAttribute('src'); img.removeAttribute('srcset'); });
+        return;
+      }
+
+      // REQ-013: On 3g, force mobile-size srcset
+      if (quality === 'mobile') {
+        var sources = wrap.querySelectorAll('source');
+        sources.forEach(function(s) {
+          var srcset = s.getAttribute('srcset') || '';
+          var mobileSrc = srcset.split(',')[0];
+          if (mobileSrc) s.setAttribute('srcset', mobileSrc.trim());
+        });
+      }
+
+      // REQ-003: Crossfade on load
+      var img = wrap.querySelector('img');
+      if (img) {
+        if (img.complete && img.naturalWidth > 0) {
+          img.classList.add('loaded');
+        } else {
+          img.addEventListener('load', function() { img.classList.add('loaded'); });
+        }
+      }
+    });
+
+    var elapsed = (performance.now() - t0).toFixed(2);
+    console.log('[AdBanner] ThumbHash decode: ' + elapsed + 'ms for ' + wraps.length + ' image(s), quality=' + quality);
   }
 
-  // ── Dismiss ──
-  function isDismissed(zone) {
-    try { const r = localStorage.getItem(CONFIG.dismissKey + zone); return r && (Date.now() - parseInt(r,10)) < CONFIG.dismissCooldown; } catch { return false; }
-  }
-  function setDismissed(zone) {
-    try { localStorage.setItem(CONFIG.dismissKey + zone, Date.now().toString()); } catch {}
-  }
-  function clearAll() {
-    try { localStorage.removeItem(CONFIG.dismissKey + 'footer'); localStorage.removeItem(CONFIG.dismissKey + 'side'); } catch {}
+  // Run ThumbHash init immediately (before DOMContentLoaded for speed)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initThumbHashes);
+  } else {
+    initThumbHashes();
   }
 
-  // ── Color helpers ──
-  function adjustColor(hex, amt) {
-    const n = parseInt(hex.replace('#',''), 16);
-    const r = Math.min(255, Math.max(0, (n >> 16) + amt));
-    const g = Math.min(255, Math.max(0, ((n >> 8) & 0xFF) + amt));
-    const b = Math.min(255, Math.max(0, (n & 0xFF) + amt));
-    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+  function generateQR(url, size) {
+    size = size || 80; const m = 21, cs = size / m; let r = '';
+    function finder(ox, oy) { for (let y=0;y<7;y++) for (let x=0;x<7;x++) { if (y===0||y===6||x===0||x===6||(y>=2&&y<=4&&x>=2&&x<=4)) r += '<rect x="'+(ox+x)*cs+'" y="'+(oy+y)*cs+'" width="'+cs+'" height="'+cs+'" fill="currentColor"/>'; } }
+    finder(0,0); finder(14,0); finder(0,14);
+    let h = 0; for (let i=0;i<url.length;i++) h = ((h<<5)-h+url.charCodeAt(i))|0;
+    for (let y=0;y<m;y++) for (let x=0;x<m;x++) { if ((y<8&&x<8)||(y<8&&x>12)||(y>12&&x<8)) continue; h=((h*1103515245+12345)&0x7fffffff); if (h%3===0) r += '<rect x="'+x*cs+'" y="'+y*cs+'" width="'+cs+'" height="'+cs+'" fill="currentColor"/>'; }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">'+r+'</svg>';
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  //  SIDE PANEL AD (right edge, interactive, layered)
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  let sideHost = null;
+  /* ══ Shadow DOM image helper — creates <picture> with ThumbHash inside shadow roots ══ */
+  function createOptimizedImage(name, thumbhash, altText, cls, width, height) {
+    var quality = shouldLoadImages();
+    var wrap = document.createElement('div');
+    wrap.className = cls || '';
+    wrap.style.cssText = 'position:relative;width:100%;height:100%;overflow:hidden;background-size:cover;background-position:center;';
 
+    // Decode ThumbHash for instant placeholder
+    var dataUrl = thumbHashToDataURL(thumbhash);
+    wrap.style.backgroundImage = 'url(' + dataUrl + ')';
+
+    if (quality === 'thumbhash-only') return wrap;
+
+    var picture = document.createElement('picture');
+
+    // AVIF source
+    var avifSrc = document.createElement('source');
+    avifSrc.type = 'image/avif';
+    var avif400 = 'images/optimized/' + name + '-400w.avif 400w';
+    var avif760 = 'images/optimized/' + name + '-760w.avif 760w';
+    avifSrc.srcset = quality === 'mobile' ? avif400 : avif400 + ', ' + avif760;
+    avifSrc.sizes = '(min-width:768px) 760px, 400px';
+    picture.appendChild(avifSrc);
+
+    // WebP source
+    var webpSrc = document.createElement('source');
+    webpSrc.type = 'image/webp';
+    var webp400 = 'images/optimized/' + name + '-400w.webp 400w';
+    var webp760 = 'images/optimized/' + name + '-760w.webp 760w';
+    webpSrc.srcset = quality === 'mobile' ? webp400 : webp400 + ', ' + webp760;
+    webpSrc.sizes = '(min-width:768px) 760px, 400px';
+    picture.appendChild(webpSrc);
+
+    // JPEG fallback
+    var img = document.createElement('img');
+    img.src = 'images/optimized/' + name + '-760w.jpg';
+    img.srcset = 'images/optimized/' + name + '-400w.jpg 400w, images/optimized/' + name + '-760w.jpg 760w';
+    img.sizes = '(min-width:768px) 760px, 400px';
+    img.width = width || 760;
+    img.height = height || 1013;
+    img.alt = altText;
+    img.decoding = 'async';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.15s ease;position:absolute;top:0;left:0;';
+
+    // Reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      img.style.transition = 'none';
+    }
+
+    // Crossfade on load
+    if (img.complete && img.naturalWidth > 0) {
+      img.style.opacity = '1';
+    } else {
+      img.addEventListener('load', function() { img.style.opacity = '1'; });
+    }
+
+    picture.appendChild(img);
+    wrap.appendChild(picture);
+    return wrap;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     IMAGE LAYER DECOMPOSITION ENGINE
+     ══════════════════════════════════════════════════════════════ */
+
+  function extractDominantColor(ctx, w, h) {
+    // Sample 4 corners + centre, average the most common hue
+    var points = [[0,0],[w-1,0],[0,h-1],[w-1,h-1],[Math.floor(w/2),Math.floor(h/2)]];
+    var r = 0, g = 0, b = 0;
+    points.forEach(function(p) {
+      var px = ctx.getImageData(p[0], p[1], 1, 1).data;
+      r += px[0]; g += px[1]; b += px[2];
+    });
+    r = Math.round(r / 5); g = Math.round(g / 5); b = Math.round(b / 5);
+    return { css: 'rgb(' + r + ',' + g + ',' + b + ')', r: r, g: g, b: b };
+  }
+
+  function generateBlurPlate(sourceCanvas, w, h) {
+    // Downscale to 32px wide, then blur for a tiny background plate
+    var ratio = h / w;
+    var tw = 32, th = Math.round(32 * ratio);
+    var c = document.createElement('canvas');
+    c.width = tw; c.height = th;
+    var ctx = c.getContext('2d');
+    ctx.filter = 'blur(2px)';
+    ctx.drawImage(sourceCanvas, 0, 0, tw, th);
+    ctx.filter = 'none';
+    return { dataUrl: c.toDataURL('image/jpeg', 0.6), width: tw, height: th };
+  }
+
+  function morphClose(mask, w, h, radius) {
+    // Dilate then erode to close small gaps in the saliency mask
+    var r = radius || 2;
+    var temp = new Uint8Array(w * h);
+    var i, x, y, dx, dy, nx, ny, found;
+
+    // Dilate: if any neighbour is 255, set to 255
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        i = y * w + x;
+        found = false;
+        for (dy = -r; dy <= r && !found; dy++) {
+          for (dx = -r; dx <= r && !found; dx++) {
+            nx = x + dx; ny = y + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h && mask[ny * w + nx] === 255) found = true;
+          }
+        }
+        temp[i] = found ? 255 : 0;
+      }
+    }
+
+    // Erode: if any neighbour is 0, set to 0
+    var result = new Uint8Array(w * h);
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        i = y * w + x;
+        found = true;
+        for (dy = -r; dy <= r && found; dy++) {
+          for (dx = -r; dx <= r && found; dx++) {
+            nx = x + dx; ny = y + dy;
+            if (nx >= 0 && nx < w && ny >= 0 && ny < h && temp[ny * w + nx] === 0) found = false;
+          }
+        }
+        result[i] = found ? 255 : 0;
+      }
+    }
+    return result;
+  }
+
+  function extractSubject(sourceCanvas, w, h) {
+    // Work at reduced resolution for performance
+    var scale = Math.min(1, 400 / Math.max(w, h));
+    var sw = Math.round(w * scale), sh = Math.round(h * scale);
+    var work = document.createElement('canvas');
+    work.width = sw; work.height = sh;
+    var wCtx = work.getContext('2d');
+    wCtx.drawImage(sourceCanvas, 0, 0, sw, sh);
+    var imgData = wCtx.getImageData(0, 0, sw, sh);
+    var px = imgData.data;
+
+    // Convert to luminance
+    var lum = new Float32Array(sw * sh);
+    for (var i = 0; i < sw * sh; i++) {
+      var off = i * 4;
+      lum[i] = 0.299 * px[off] + 0.587 * px[off + 1] + 0.114 * px[off + 2];
+    }
+
+    // Compute local contrast (8x8 block variance)
+    var bs = 8;
+    var contrast = new Float32Array(sw * sh);
+    for (var by = 0; by < sh; by += bs) {
+      for (var bx = 0; bx < sw; bx += bs) {
+        // Block mean
+        var sum = 0, count = 0;
+        for (var dy = 0; dy < bs && by + dy < sh; dy++) {
+          for (var dx = 0; dx < bs && bx + dx < sw; dx++) {
+            sum += lum[(by + dy) * sw + (bx + dx)];
+            count++;
+          }
+        }
+        var mean = sum / count;
+        // Block variance
+        var variance = 0;
+        for (var dy2 = 0; dy2 < bs && by + dy2 < sh; dy2++) {
+          for (var dx2 = 0; dx2 < bs && bx + dx2 < sw; dx2++) {
+            var diff = lum[(by + dy2) * sw + (bx + dx2)] - mean;
+            variance += diff * diff;
+          }
+        }
+        variance /= count;
+        // Assign contrast value to all pixels in block
+        for (var dy3 = 0; dy3 < bs && by + dy3 < sh; dy3++) {
+          for (var dx3 = 0; dx3 < bs && bx + dx3 < sw; dx3++) {
+            contrast[(by + dy3) * sw + (bx + dx3)] = variance;
+          }
+        }
+      }
+    }
+
+    // Find 75th percentile threshold
+    var sorted = Array.from(contrast).sort(function(a, b) { return a - b; });
+    var threshold = sorted[Math.floor(sorted.length * 0.75)];
+    // Ensure minimum threshold to avoid selecting everything
+    threshold = Math.max(threshold, 50);
+
+    // Binary mask
+    var mask = new Uint8Array(sw * sh);
+    for (var j = 0; j < sw * sh; j++) {
+      mask[j] = contrast[j] >= threshold ? 255 : 0;
+    }
+
+    // Morphological close to fill gaps
+    mask = morphClose(mask, sw, sh, 3);
+    mask = morphClose(mask, sw, sh, 2);
+
+    // Apply mask to original at full resolution
+    var out = document.createElement('canvas');
+    out.width = w; out.height = h;
+    var oCtx = out.getContext('2d');
+    oCtx.drawImage(sourceCanvas, 0, 0);
+    var outData = oCtx.getImageData(0, 0, w, h);
+    var outPx = outData.data;
+
+    for (var oy = 0; oy < h; oy++) {
+      for (var ox = 0; ox < w; ox++) {
+        // Map to mask coordinates
+        var mx = Math.min(sw - 1, Math.round(ox * scale));
+        var my = Math.min(sh - 1, Math.round(oy * scale));
+        var alpha = mask[my * sw + mx];
+        outPx[(oy * w + ox) * 4 + 3] = alpha;
+      }
+    }
+
+    oCtx.putImageData(outData, 0, 0);
+    return out.toDataURL('image/png');
+  }
+
+  function decomposeImage(source) {
+    // source: HTMLImageElement or HTMLCanvasElement
+    var statusEl = document.getElementById('optimiserStatus');
+    var previewEl = document.getElementById('layerPreview');
+
+    statusEl.textContent = 'Decomposing layers...';
+    previewEl.innerHTML = '';
+
+    var w = source.naturalWidth || source.width;
+    var h = source.naturalHeight || source.height;
+
+    // Draw source to canvas
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(source, 0, 0);
+
+    var t0 = performance.now();
+
+    // Layer 0: Dominant color
+    var color = extractDominantColor(ctx, w, h);
+
+    // Layer 1: Blurred plate
+    var plate = generateBlurPlate(canvas, w, h);
+    var plateSize = Math.round(plate.dataUrl.length * 0.75); // approximate decoded bytes
+
+    // Layer 2: Subject cutout
+    statusEl.textContent = 'Extracting subject...';
+
+    // Use requestAnimationFrame to avoid blocking UI
+    requestAnimationFrame(function() {
+      var cutoutDataUrl = extractSubject(canvas, w, h);
+      var cutoutSize = Math.round(cutoutDataUrl.length * 0.75);
+
+      var elapsed = (performance.now() - t0).toFixed(0);
+
+      // Store layers in state
+      state.optimizedLayers = {
+        dominantColor: color.css,
+        blurPlate: plate.dataUrl,
+        cutout: cutoutDataUrl,
+        sourceWidth: w,
+        sourceHeight: h,
+      };
+
+      // Build layer preview thumbnails
+      previewEl.innerHTML = '';
+
+      // Thumb 0: Color swatch
+      var t0El = document.createElement('div');
+      t0El.className = 'layer-thumb';
+      var swatch = document.createElement('div');
+      swatch.className = 'swatch';
+      swatch.style.backgroundColor = color.css;
+      t0El.appendChild(swatch);
+      var t0Label = document.createElement('span');
+      t0Label.textContent = 'Color';
+      t0El.appendChild(t0Label);
+      previewEl.appendChild(t0El);
+
+      // Thumb 1: Blur plate
+      var t1El = document.createElement('div');
+      t1El.className = 'layer-thumb';
+      var t1Img = document.createElement('img');
+      t1Img.src = plate.dataUrl;
+      t1Img.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--panel-border);';
+      t1El.appendChild(t1Img);
+      var t1Label = document.createElement('span');
+      t1Label.textContent = 'Blur ' + (plateSize / 1024).toFixed(1) + 'KB';
+      t1El.appendChild(t1Label);
+      previewEl.appendChild(t1El);
+
+      // Thumb 2: Cutout
+      var t2El = document.createElement('div');
+      t2El.className = 'layer-thumb';
+      var t2Img = document.createElement('img');
+      t2Img.src = cutoutDataUrl;
+      t2Img.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--panel-border);background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/8px 8px;';
+      t2El.appendChild(t2Img);
+      var t2Label = document.createElement('span');
+      t2Label.textContent = 'Subject ' + (cutoutSize / 1024).toFixed(1) + 'KB';
+      t2El.appendChild(t2Label);
+      previewEl.appendChild(t2El);
+
+      statusEl.textContent = 'Decomposed in ' + elapsed + 'ms — 3 layers extracted';
+      console.log('[ImageOptimiser] Layers: color=' + color.css + ', plate=' + (plateSize/1024).toFixed(1) + 'KB, cutout=' + (cutoutSize/1024).toFixed(1) + 'KB, time=' + elapsed + 'ms');
+
+      // Re-render banners with new layers
+      render();
+    });
+  }
+
+  function applyLayersToBanner(shadow, zone) {
+    if (!state.optimizedLayers) return;
+    var layers = state.optimizedLayers;
+    var imgEl = shadow.querySelector('.breakout-img');
+    if (!imgEl) return;
+
+    // Clear existing content
+    imgEl.innerHTML = '';
+    imgEl.style.opacity = '1';
+    imgEl.style.mixBlendMode = 'normal';
+
+    // Layer 0: Dominant color background
+    imgEl.style.backgroundColor = layers.dominantColor;
+
+    // Layer 1: Blurred plate
+    imgEl.style.backgroundImage = 'url(' + layers.blurPlate + ')';
+    imgEl.style.backgroundSize = 'cover';
+    imgEl.style.backgroundPosition = 'center';
+
+    // Layer 2: Subject cutout with crossfade
+    var cutImg = document.createElement('img');
+    cutImg.src = layers.cutout;
+    cutImg.alt = 'Optimised subject layer';
+    cutImg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.15s ease;z-index:1;';
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      cutImg.style.transition = 'none';
+    }
+
+    if (cutImg.complete && cutImg.naturalWidth > 0) {
+      cutImg.style.opacity = '1';
+    } else {
+      cutImg.addEventListener('load', function() { cutImg.style.opacity = '1'; });
+    }
+
+    imgEl.appendChild(cutImg);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     SIDE PANEL — Right edge, breakout athlete, Nike-style
+     ══════════════════════════════════════════════════════════════ */
   function createSidePanel() {
-    if (sideHost) { sideHost.remove(); sideHost = null; }
-    if (!CONFIG.enabled || isDismissed('side')) return;
+    if (isDismissed('side')) return null;
+    const host = document.createElement('div');
+    host.id = 'ff-side-host';
+    host.style.cssText = 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;contain:layout style;';
+    document.documentElement.appendChild(host);
+    const shadow = host.attachShadow({ mode: 'closed' });
+    const A = state.accent, G = state.mode === 'glass';
 
-    sideHost = document.createElement('div');
-    sideHost.id = 'ff-side-host';
-    sideHost.style.cssText = `position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:2147483646; pointer-events:none;`;
+    shadow.innerHTML = `
+      <style>
+        :host { all: initial; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    const shadow = sideHost.attachShadow({ mode: 'open' });
-    const accent = CONFIG.accent;
-    const accent2 = adjustColor(accent, -40);
-    const isGlass = CONFIG.mode === 'glass';
-
-    const style = document.createElement('style');
-    style.textContent = `
-      :host { display: block; }
-
-      .side-panel {
-        pointer-events: auto;
-        width: 72px;
-        transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
-        overflow: hidden;
-        cursor: pointer;
-        position: relative;
-        animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        border-radius: 16px 0 0 16px;
-        ${isGlass
-          ? `background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%); border: 1px solid rgba(255,255,255,0.12); border-right: none;`
-          : `background: #1c1c1e; border: 1px solid rgba(255,255,255,0.06); border-right: none;`
+        .panel {
+          position: fixed; top: 50%; right: -6px; transform: translateY(-50%);
+          width: 82px; height: 440px;
+          pointer-events: auto; cursor: pointer;
+          transition: width 0.45s cubic-bezier(0.16,1,0.3,1), right 0.45s cubic-bezier(0.16,1,0.3,1);
+          overflow: visible; z-index: 2147483647;
         }
-        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-      }
+        .panel:hover, .panel.expanded { width: 340px; right: 0; }
 
-      .side-panel:hover, .side-panel.expanded {
-        width: 280px;
-        box-shadow: -8px 0 40px rgba(0,0,0,0.3);
-      }
-
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to   { transform: translateX(0);    opacity: 1; }
-      }
-      @keyframes slideOut {
-        from { transform: translateX(0);    opacity: 1; }
-        to   { transform: translateX(100%); opacity: 0; }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .side-panel { animation: none !important; opacity: 1; transform: none; }
-      }
-
-      @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-        .side-panel { background: rgba(28,28,30,0.96) !important; }
-      }
-
-      .side-inner {
-        width: 280px;
-        min-height: 340px;
-        display: flex;
-        flex-direction: column;
-        color: #fff;
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-        position: relative;
-      }
-
-      /* ── Parallax hero image area ── */
-      .hero {
-        position: relative;
-        height: 160px;
-        overflow: hidden;
-        border-radius: 14px 0 0 0;
-      }
-
-      .hero-layer {
-        position: absolute;
-        inset: 0;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        will-change: transform;
-      }
-
-      /* Background layer */
-      .hero-bg {
-        background: linear-gradient(145deg, ${accent}, ${accent2});
-        z-index: 0;
-      }
-
-      /* Mid layer — floating shapes */
-      .hero-mid {
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .hero-mid svg { opacity: 0.25; }
-
-      /* Front layer — product "leaping out" */
-      .hero-front {
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .product-img {
-        width: 100px;
-        height: 100px;
-        border-radius: 20px;
-        background: rgba(255,255,255,0.2);
-        border: 2px solid rgba(255,255,255,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 48px;
-        transform: translateY(0) scale(1);
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        -webkit-backdrop-filter: blur(8px);
-        backdrop-filter: blur(8px);
-      }
-      .side-panel:hover .product-img,
-      .side-panel.expanded .product-img {
-        transform: translateY(-8px) scale(1.08);
-      }
-
-      /* Shimmer glow on hover */
-      .hero::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 80%, rgba(255,255,255,0.15), transparent 60%);
-        opacity: 0;
-        transition: opacity 0.4s;
-        z-index: 3;
-        pointer-events: none;
-      }
-      .side-panel:hover .hero::after,
-      .side-panel.expanded .hero::after { opacity: 1; }
-
-      /* ── Collapsed tab (visible when narrow) ── */
-      .tab {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 72px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        z-index: 10;
-        transition: opacity 0.2s;
-      }
-      .side-panel:hover .tab,
-      .side-panel.expanded .tab { opacity: 0; pointer-events: none; }
-
-      .tab-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, ${accent}, ${accent2});
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      }
-      .tab-text {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.6);
-      }
-
-      /* ── Content (visible on expand) ── */
-      .side-content {
-        padding: 14px 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        opacity: 0;
-        transition: opacity 0.25s 0.1s;
-      }
-      .side-panel:hover .side-content,
-      .side-panel.expanded .side-content { opacity: 1; }
-
-      .side-label {
-        font-size: 9px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: rgba(255,255,255,0.4);
-      }
-      .side-title {
-        font-size: 16px;
-        font-weight: 700;
-        line-height: 1.25;
-        letter-spacing: -0.2px;
-      }
-      .side-desc {
-        font-size: 12px;
-        line-height: 1.4;
-        color: rgba(255,255,255,0.6);
-      }
-
-      /* ── Hover-to-reveal details ── */
-      .reveal {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .side-panel:hover .reveal,
-      .side-panel.expanded .reveal { max-height: 120px; }
-
-      .reveal-inner {
-        padding-top: 8px;
-        display: flex;
-        gap: 8px;
-        align-items: flex-start;
-      }
-      .reveal-stats {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .stat {
-        display: flex;
-        justify-content: space-between;
-        font-size: 11px;
-        padding: 4px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-      }
-      .stat-label { color: rgba(255,255,255,0.45); }
-      .stat-value { font-weight: 600; color: ${accent}; }
-
-      /* ── QR Code ── */
-      .qr-block {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 3px;
-        flex-shrink: 0;
-      }
-      .qr-code {
-        width: 56px;
-        height: 56px;
-        padding: 4px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.1);
-      }
-      .qr-code svg { width: 100%; height: 100%; }
-      .qr-label {
-        font-size: 7px;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        color: rgba(255,255,255,0.35);
-        text-align: center;
-      }
-
-      /* ── CTA ── */
-      .side-cta {
-        width: 100%;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        background: ${accent};
-        color: #fff;
-        font-size: 13px;
-        font-weight: 600;
-        font-family: inherit;
-        cursor: pointer;
-        transition: transform 0.1s;
-      }
-      .side-cta:hover { transform: scale(1.02); }
-      .side-cta:active { transform: scale(0.98); }
-      .side-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-      /* ── Dismiss ── */
-      .side-dismiss {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 24px;
-        height: 24px;
-        min-width: 44px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        border-radius: 50%;
-        background: rgba(0,0,0,0.35);
-        color: rgba(255,255,255,0.6);
-        font-size: 12px;
-        cursor: pointer;
-        z-index: 20;
-        opacity: 0;
-        transition: opacity 0.2s;
-        padding: 0;
-        margin: 0;
-      }
-      .side-panel:hover .side-dismiss,
-      .side-panel.expanded .side-dismiss { opacity: 1; }
-      .side-dismiss:hover { background: rgba(0,0,0,0.55); color: #fff; }
-      .side-dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-      .ad-info {
-        position: absolute;
-        top: 8px;
-        right: 36px;
-        opacity: 0;
-        transition: opacity 0.2s;
-        z-index: 20;
-      }
-      .side-panel:hover .ad-info,
-      .side-panel.expanded .ad-info { opacity: 0.4; }
-      .ad-info svg { width: 14px; height: 14px; }
-    `;
-    shadow.appendChild(style);
-
-    // ── DOM ──
-    const panel = document.createElement('div');
-    panel.className = 'side-panel';
-    panel.setAttribute('role', 'complementary');
-    panel.setAttribute('aria-label', 'Advertisement');
-
-    const inner = document.createElement('div');
-    inner.className = 'side-inner';
-
-    // Parallax hero
-    const hero = document.createElement('div');
-    hero.className = 'hero';
-
-    const bgLayer = document.createElement('div');
-    bgLayer.className = 'hero-layer hero-bg';
-
-    const midLayer = document.createElement('div');
-    midLayer.className = 'hero-layer hero-mid';
-    midLayer.innerHTML = `<svg width="200" height="160" viewBox="0 0 200 160"><circle cx="40" cy="120" r="60" fill="white" opacity="0.08"/><circle cx="170" cy="30" r="45" fill="white" opacity="0.06"/><rect x="80" y="70" width="80" height="80" rx="20" fill="white" opacity="0.05" transform="rotate(15 120 110)"/></svg>`;
-
-    const frontLayer = document.createElement('div');
-    frontLayer.className = 'hero-layer hero-front';
-    const productImg = document.createElement('div');
-    productImg.className = 'product-img';
-    productImg.textContent = '\u2B22'; // hexagon
-    frontLayer.appendChild(productImg);
-
-    hero.append(bgLayer, midLayer, frontLayer);
-
-    // Parallax mouse tracking
-    panel.addEventListener('mousemove', (e) => {
-      const rect = hero.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      bgLayer.style.transform = `translate(${x * -8}px, ${y * -6}px) scale(1.05)`;
-      midLayer.style.transform = `translate(${x * 12}px, ${y * 10}px)`;
-      frontLayer.style.transform = `translate(${x * 20}px, ${y * 16}px)`;
-    });
-    panel.addEventListener('mouseleave', () => {
-      bgLayer.style.transform = 'translate(0,0) scale(1.05)';
-      midLayer.style.transform = 'translate(0,0)';
-      frontLayer.style.transform = 'translate(0,0)';
-    });
-
-    // Collapsed tab
-    const tab = document.createElement('div');
-    tab.className = 'tab';
-    tab.innerHTML = `<div class="tab-icon">\u2B22</div><span class="tab-text">Explore</span>`;
-
-    // Content
-    const content = document.createElement('div');
-    content.className = 'side-content';
-
-    content.innerHTML = `
-      <span class="side-label">Sponsored</span>
-      <span class="side-title">AI Agent Platform</span>
-      <span class="side-desc">Deploy autonomous agents at scale. Enterprise-grade security built in.</span>
-    `;
-
-    // Hover-to-reveal stats + QR
-    const reveal = document.createElement('div');
-    reveal.className = 'reveal';
-    const revealInner = document.createElement('div');
-    revealInner.className = 'reveal-inner';
-
-    const stats = document.createElement('div');
-    stats.className = 'reveal-stats';
-    stats.innerHTML = `
-      <div class="stat"><span class="stat-label">Agents</span><span class="stat-value">Unlimited</span></div>
-      <div class="stat"><span class="stat-label">Uptime</span><span class="stat-value">99.99%</span></div>
-      <div class="stat"><span class="stat-label">Price</span><span class="stat-value">$7/mo</span></div>
-    `;
-
-    const qrBlock = document.createElement('div');
-    qrBlock.className = 'qr-block';
-    const qrCode = document.createElement('div');
-    qrCode.className = 'qr-code';
-    qrCode.innerHTML = generateQR('https://example.com/ai-platform', 56);
-    const qrLabel = document.createElement('span');
-    qrLabel.className = 'qr-label';
-    qrLabel.textContent = 'Scan to try';
-    qrBlock.append(qrCode, qrLabel);
-
-    revealInner.append(stats, qrBlock);
-    reveal.appendChild(revealInner);
-    content.appendChild(reveal);
-
-    // CTA
-    const cta = document.createElement('button');
-    cta.className = 'side-cta';
-    cta.textContent = 'Start Free Trial';
-    cta.addEventListener('click', () => emitEvent('click', 'side'));
-    content.appendChild(cta);
-
-    // Dismiss
-    const dismissBtn = document.createElement('button');
-    dismissBtn.className = 'side-dismiss';
-    dismissBtn.setAttribute('aria-label', 'Dismiss advertisement');
-    dismissBtn.innerHTML = '&#10005;';
-    dismissBtn.addEventListener('click', (e) => { e.stopPropagation(); dismissAd('side'); });
-
-    // Ad info
-    const adInfo = document.createElement('div');
-    adInfo.className = 'ad-info';
-    adInfo.innerHTML = `<svg viewBox="0 0 16 16" fill="none"><path d="M8 1L15 14H1L8 1Z" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/><text x="8" y="12" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="7" font-weight="700" font-family="sans-serif">i</text></svg>`;
-
-    inner.append(hero, tab, content, dismissBtn, adInfo);
-    panel.appendChild(inner);
-    shadow.appendChild(panel);
-    document.documentElement.appendChild(sideHost);
-
-    emitEvent('loaded', 'side');
-    setTimeout(() => { if (sideHost && sideHost.isConnected) emitEvent('impression', 'side'); }, 1000);
-  }
-
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  //  FOOTER BANNER (interactive, layered, with QR)
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  let footerHost = null;
-
-  function createFooterBanner() {
-    if (footerHost) { footerHost.remove(); footerHost = null; }
-    if (!CONFIG.enabled || isDismissed('footer')) return;
-
-    const accent = CONFIG.accent;
-    const accent2 = adjustColor(accent, -40);
-    const isGlass = CONFIG.mode === 'glass';
-
-    footerHost = document.createElement('div');
-    footerHost.id = 'ff-footer-host';
-    footerHost.style.cssText = `position:fixed; bottom:0; left:0; right:0; z-index:2147483647; pointer-events:none; padding-bottom:env(safe-area-inset-bottom, 0px);`;
-
-    const shadow = footerHost.attachShadow({ mode: 'open' });
-
-    // Preset shell styles
-    const presetStyles = {
-      capsule: `border-radius: 16px; margin: 0 12px;`,
-      angled: `clip-path: polygon(2% 0%, 100% 0%, 100% 100%, 0% 100%); margin: 0 8px;`,
-      signature: ``
-    };
-
-    const style = document.createElement('style');
-    style.textContent = `
-      :host { display: block; }
-
-      .footer-banner {
-        pointer-events: auto;
-        padding: 8px;
-        animation: enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      }
-      @keyframes enter {
-        from { transform: translateY(100%); opacity: 0; }
-        to   { transform: translateY(0);    opacity: 1; }
-      }
-      @keyframes exit {
-        to { transform: translateY(100%); opacity: 0; }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .footer-banner { animation: none !important; opacity: 1; transform: none; }
-      }
-
-      .shell {
-        position: relative;
-        overflow: hidden;
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-        ${isGlass
-          ? `background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.12);`
-          : `background: #1c1c1e; border: 1px solid rgba(255,255,255,0.05);`
+        /* Angled shell — diagonal left edge */
+        .shell {
+          position: absolute; inset: 0;
+          ${G
+            ? `background: rgba(255,255,255,0.08); -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1); backdrop-filter: blur(40px) saturate(180%) brightness(1.1); border-left: 1px solid rgba(255,255,255,0.18); border-top: 1px solid rgba(255,255,255,0.12);`
+            : `background: linear-gradient(178deg, #06060e 0%, ${darken(A,0.25)} 60%, #0a0818 100%);`}
+          clip-path: polygon(22% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 88%);
+          transition: clip-path 0.45s cubic-bezier(0.16,1,0.3,1);
+          box-shadow: -6px 0 40px rgba(0,0,0,0.5);
         }
-        ${presetStyles[CONFIG.preset] || ''}
-        box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
-      }
+        .panel:hover .shell { clip-path: polygon(6% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 94%); will-change: clip-path; }
 
-      @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-        .shell { background: rgba(28,28,30,0.96) !important; }
-      }
+        @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+          .shell { background: rgba(10,10,22,0.92) !important; }
+        }
 
-      .shell.sig-mask {
-        -webkit-mask-image: var(--sig-mask);
-        mask-image: var(--sig-mask);
-        -webkit-mask-size: 100% 100%;
-        mask-size: 100% 100%;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        border: none;
-      }
+        /* Glass inner glow edge */
+        ${G ? `.shell::after { content:''; position:absolute; inset:0; clip-path:inherit; background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(255,255,255,0.04) 100%); pointer-events:none; }` : ''}
 
-      /* ── Main strip ── */
-      .strip {
-        display: flex;
-        align-items: stretch;
-        height: 80px;
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-        color: #fff;
-        position: relative;
-      }
+        /* ── Breakout athlete figure — bursts LEFT past panel edge ── */
+        .breakout {
+          position: absolute; top: 12px; left: -55px;
+          width: 200px; height: 260px;
+          z-index: 3;
+          /* Use box-shadow on child instead of filter drop-shadow for GPU perf */
+          transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+          pointer-events: none;
+        }
+        .panel:hover .breakout { left: -80px; width: 260px; height: 300px; top: 0; }
 
-      /* ── Hero creative with parallax layers ── */
-      .creative {
-        width: 200px;
-        flex-shrink: 0;
-        position: relative;
-        overflow: hidden;
-      }
-      .creative-layer {
-        position: absolute;
-        inset: 0;
-        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        will-change: transform;
-      }
-      .creative-bg {
-        background: linear-gradient(135deg, ${accent}, ${accent2});
-        z-index: 0;
-      }
-      .creative-shapes {
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .creative-shapes svg { opacity: 0.15; }
-      .creative-front {
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+        /* Athlete silhouette — dynamic action pose */
+        .athlete {
+          width: 100%; height: 100%; position: relative;
+        }
+        .athlete .body {
+          position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+          width: 80%; height: 92%;
+          background: linear-gradient(170deg, ${A} 0%, ${darken(A,0.4)} 100%);
+          clip-path: polygon(42% 0%, 58% 0%, 62% 3%, 60% 8%, 55% 8%, 58% 12%, 65% 10%, 72% 14%, 68% 18%, 62% 16%, 58% 20%, 60% 28%, 75% 22%, 88% 18%, 95% 22%, 85% 28%, 70% 32%, 62% 35%, 60% 42%, 58% 55%, 65% 62%, 72% 58%, 78% 65%, 70% 72%, 58% 68%, 55% 75%, 58% 85%, 62% 95%, 55% 100%, 48% 100%, 45% 92%, 42% 82%, 38% 75%, 35% 68%, 28% 72%, 22% 65%, 30% 58%, 38% 62%, 42% 55%, 40% 42%, 38% 35%, 30% 32%, 15% 28%, 5% 22%, 12% 18%, 25% 14%, 38% 16%, 42% 20%, 40% 12%, 45% 8%, 42% 3%);
+          transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        .panel:hover .athlete .body { transform: translateX(-50%) scale(1.06) translateY(-4px); }
 
-      /* Product image that "leaps" forward */
-      .product {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
-        background: rgba(255,255,255,0.18);
-        border: 1.5px solid rgba(255,255,255,0.25);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        box-shadow: 0 6px 24px rgba(0,0,0,0.3);
-        -webkit-backdrop-filter: blur(6px);
-        backdrop-filter: blur(6px);
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .shell:hover .product {
-        transform: translateY(-4px) scale(1.06);
-      }
+        /* Radial glow burst */
+        .athlete::before {
+          content: ''; position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%);
+          width: 160%; height: 160%;
+          background: radial-gradient(ellipse, ${hexRgba(A,0.35)} 0%, ${hexRgba(A,0.1)} 40%, transparent 70%);
+          z-index: -1;
+        }
+        /* Energy streaks */
+        .streak {
+          position: absolute; background: ${hexRgba(A,0.25)}; border-radius: 1px;
+          transform-origin: right center;
+        }
 
-      /* Glow on hover */
-      .creative::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 50% 60%, rgba(255,255,255,0.12), transparent 50%);
-        opacity: 0;
-        transition: opacity 0.3s;
-        z-index: 3;
-        pointer-events: none;
-      }
-      .shell:hover .creative::after { opacity: 1; }
+        /* ── Collapsed vertical label ── */
+        .v-label {
+          position: absolute; top: 50%; right: 20px;
+          transform: translateY(-50%) rotate(180deg);
+          writing-mode: vertical-rl;
+          font: 800 15px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+          color: #fff; letter-spacing: 3px; text-transform: uppercase;
+          opacity: 1; transition: opacity 0.3s; z-index: 5;
+        }
+        .panel:hover .v-label { opacity: 0; }
 
-      /* ── Text ── */
-      .text {
-        flex: 1;
-        min-width: 0;
-        padding: 10px 14px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 3px;
-      }
-      .text-label {
-        font-size: 8px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: rgba(255,255,255,0.35);
-      }
-      .text-headline {
-        font-size: 15px;
-        font-weight: 700;
-        line-height: 1.2;
-        letter-spacing: -0.2px;
-      }
-      .text-sub {
-        font-size: 11px;
-        color: rgba(255,255,255,0.55);
-        line-height: 1.2;
-      }
+        /* Pulsing indicator dot */
+        .pulse-dot {
+          position: absolute; bottom: 30px; right: 32px;
+          width: 8px; height: 8px; border-radius: 50%;
+          background: ${A}; z-index: 5;
+          animation: dot-pulse 2s ease-in-out infinite;
+        }
+        .panel:hover .pulse-dot { opacity: 0; }
+        @keyframes dot-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.5); } }
 
-      /* ── Hover-to-reveal detail row ── */
-      .reveal-row {
-        display: flex;
-        gap: 6px;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s;
-        margin-top: 0;
-      }
-      .shell:hover .reveal-row { max-height: 28px; margin-top: 4px; }
+        /* ── Expanded content ── */
+        .expanded {
+          position: absolute; bottom: 0; right: 0; width: 100%; height: 100%;
+          display: flex; flex-direction: column; justify-content: flex-end;
+          padding: 16px 16px 20px 30px;
+          opacity: 0; transform: translateX(16px);
+          transition: opacity 0.4s 0.08s, transform 0.4s 0.08s cubic-bezier(0.16,1,0.3,1);
+          z-index: 4;
+        }
+        .panel:hover .expanded { opacity: 1; transform: translateX(0); }
 
-      .chip {
-        font-size: 10px;
-        padding: 3px 8px;
-        border-radius: 4px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.08);
-        color: rgba(255,255,255,0.6);
-        white-space: nowrap;
-      }
-      .chip-accent { color: ${accent}; border-color: ${accent}33; background: ${accent}11; }
+        .ad-tag { font: 600 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+        .brand { font: 900 11px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px; }
+        .headline { font: 900 30px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; color: #fff; text-transform: uppercase; text-shadow: 0 2px 16px rgba(0,0,0,0.6); margin-bottom: 4px; }
+        .headline em { font-style: normal; color: ${A}; display: block; font-size: 38px; }
+        .sub { font: 400 12px/1.4 -apple-system, sans-serif; color: rgba(255,255,255,0.6); margin-bottom: 14px; }
 
-      /* ── QR Code ── */
-      .qr {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        padding: 8px 10px;
-        flex-shrink: 0;
-        align-self: center;
-      }
-      .qr-box {
-        width: 48px;
-        height: 48px;
-        padding: 3px;
-        background: rgba(255,255,255,0.06);
-        border-radius: 6px;
-        border: 1px solid rgba(255,255,255,0.08);
-        transition: transform 0.2s, border-color 0.2s;
-      }
-      .qr-box:hover { transform: scale(1.08); border-color: rgba(255,255,255,0.2); }
-      .qr-box svg { width: 100%; height: 100%; }
-      .qr-hint {
-        font-size: 7px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: rgba(255,255,255,0.3);
-      }
+        /* Color swatches */
+        .swatches { display: flex; gap: 6px; margin-bottom: 14px; }
+        .sw { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+        .sw:hover { transform: scale(1.25); }
+        .sw.on { border-color: #fff; transform: scale(1.15); }
 
-      /* ── CTA ── */
-      .cta {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 0 18px;
-        border: none;
-        border-radius: 8px;
-        background: ${accent};
-        color: #fff;
-        font-size: 12px;
-        font-weight: 600;
-        font-family: inherit;
-        cursor: pointer;
-        flex-shrink: 0;
-        align-self: center;
-        white-space: nowrap;
-        transition: transform 0.1s;
-        height: 36px;
-        display: flex;
-        align-items: center;
+        /* CTA — arrow-shaped, not rectangular */
+        .cta {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 11px 24px 11px 16px;
+          background: ${A}; color: #fff;
+          font: 700 12px/1 -apple-system, sans-serif; text-transform: uppercase; letter-spacing: 1.2px;
+          border: none; cursor: pointer;
+          clip-path: polygon(0% 0%, 88% 0%, 100% 50%, 88% 100%, 0% 100%);
+          min-height: 44px; min-width: 44px;
+          transition: transform 0.2s, filter 0.2s;
+        }
+        .cta:hover { transform: scale(1.06); filter: brightness(1.15); }
+        .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+        .qr-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; opacity: 0.35; transition: opacity 0.35s, transform 0.35s; transform: scale(0.95); }
+        .qr-row:hover { opacity: 1; transform: scale(1); }
+        .qr-row:hover svg { filter: drop-shadow(0 0 8px ${hexRgba(A,0.5)}); }
+        .qr-row svg { color: rgba(255,255,255,0.75); transition: filter 0.3s; }
+        .qr-row .ql { font: 400 9px/1.3 -apple-system, sans-serif; color: rgba(255,255,255,0.45); }
+
+        /* Dismiss */
+        .x {
+          position: absolute; top: 10px; right: 10px;
+          width: 28px; height: 28px; border-radius: 50%; border: none;
+          background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.6);
+          font-size: 14px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          opacity: 0; transition: opacity 0.3s; z-index: 10;
+          min-width: 44px; min-height: 44px;
+        }
+        .panel:hover .x { opacity: 1; }
+        .x:hover { background: rgba(0,0,0,0.6); color: #fff; }
+        .x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+        @keyframes enterRight { from { transform: translateY(-50%) translateX(100%); opacity: 0; } to { transform: translateY(-50%); opacity: 1; } }
+        .panel { animation: enterRight 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+        @media (prefers-reduced-motion: reduce) { .panel { animation: none; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+      </style>
+
+      <div class="panel" role="complementary" aria-label="Advertisement">
+        <div class="shell"></div>
+
+        <div class="breakout">
+          <div class="athlete"><div class="body"></div></div>
+          <div class="breakout-img" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:inherit;overflow:hidden;opacity:0.35;mix-blend-mode:screen;"></div>
+        </div>
+
+        <div class="v-label">Explore</div>
+        <div class="pulse-dot"></div>
+
+        <div class="expanded">
+          <div class="ad-tag">Sponsored</div>
+          <div class="brand">Performance Lab</div>
+          <div class="headline">Unleash<br><em>The Power</em></div>
+          <div class="sub">Next-gen performance gear.<br>Built for boundary breakers.</div>
+          <div class="swatches">
+            <div class="sw on" style="background:${A}" data-c="${A}"></div>
+            <div class="sw" style="background:#2563eb" data-c="#2563eb"></div>
+            <div class="sw" style="background:#16a34a" data-c="#16a34a"></div>
+            <div class="sw" style="background:#f5f5f5" data-c="#f5f5f5"></div>
+          </div>
+          <button class="cta" tabindex="0">Shop Now &#9654;</button>
+          <div class="qr-row">
+            <div>${generateQR('https://brand.co/side', 58)}</div>
+            <div class="ql">Scan to<br>shop mobile</div>
+          </div>
+        </div>
+
+        <button class="x" aria-label="Dismiss advertisement" tabindex="0">&times;</button>
+      </div>`;
+
+    // Energy streaks
+    // Apply uploaded image layers or fallback to default optimized image
+    if (state.optimizedLayers) {
+      applyLayersToBanner(shadow, 'side');
+    } else {
+      var sideBreakoutImg = shadow.querySelector('.breakout-img');
+      if (sideBreakoutImg) {
+        var athleteImg = createOptimizedImage('athlete-hero', 'zPYFHQYGp4eCapgYx3Rqd0mPlvJY', 'Athlete breakout', '', 400, 533);
+        sideBreakoutImg.appendChild(athleteImg);
       }
-      .cta:hover { transform: scale(1.03); }
-      .cta:active { transform: scale(0.97); }
-      .cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-      /* ── Controls ── */
-      .controls {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 2px;
-        padding: 0 8px;
-        flex-shrink: 0;
-      }
-      .ad-badge { opacity: 0.35; }
-      .ad-badge svg { width: 12px; height: 12px; }
-      .dismiss {
-        width: 24px; height: 24px;
-        min-width: 44px; min-height: 44px;
-        display: flex; align-items: center; justify-content: center;
-        border: none; border-radius: 50%;
-        background: transparent;
-        color: rgba(255,255,255,0.35);
-        font-size: 14px; cursor: pointer; font-family: inherit;
-        padding: 0; transition: color 0.12s;
-      }
-      .dismiss:hover { color: rgba(255,255,255,0.8); }
-      .dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-    `;
-    shadow.appendChild(style);
-
-    // ── DOM ──
-    const banner = document.createElement('div');
-    banner.className = 'footer-banner';
-    banner.setAttribute('role', 'complementary');
-    banner.setAttribute('aria-label', 'Advertisement');
-
-    const shell = document.createElement('div');
-    shell.className = 'shell';
-
-    // Signature mask
-    if (CONFIG.preset === 'signature') {
-      const path = 'M0,14 C100,0 200,6 300,3 C400,0 500,8 600,4 C700,0 750,6 800,0 L800,80 L0,80 Z';
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 80'><path d='${path}' fill='white'/></svg>`;
-      shell.style.setProperty('--sig-mask', `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
-      shell.classList.add('sig-mask');
     }
 
-    const strip = document.createElement('div');
-    strip.className = 'strip';
+    const ath = shadow.querySelector('.athlete');
+    for (let i = 0; i < 8; i++) {
+      const s = document.createElement('div');
+      s.className = 'streak';
+      s.style.cssText = 'top:' + (10+Math.random()*75) + '%;left:' + (-30-Math.random()*50) + '%;width:' + (15+Math.random()*35) + '%;height:' + (1+Math.random()*2.5) + 'px;opacity:' + (0.1+Math.random()*0.3) + ';';
+      ath.appendChild(s);
+    }
 
-    // Creative with parallax
-    const creative = document.createElement('div');
-    creative.className = 'creative';
+    // Swatch interactivity
+    const sws = shadow.querySelectorAll('.sw');
+    const body = shadow.querySelector('.body');
+    sws.forEach(s => s.addEventListener('click', () => {
+      sws.forEach(x => x.classList.remove('on'));
+      s.classList.add('on');
+      const c = s.dataset.c;
+      body.style.background = 'linear-gradient(170deg, ' + c + ' 0%, ' + darken(c,0.4) + ' 100%)';
+      logEvent('ff:ad:interaction', { zone: 'side', action: 'swatch', color: c });
+    }));
 
-    const bgL = document.createElement('div');
-    bgL.className = 'creative-layer creative-bg';
-    const midL = document.createElement('div');
-    midL.className = 'creative-layer creative-shapes';
-    midL.innerHTML = `<svg width="200" height="80" viewBox="0 0 200 80"><circle cx="30" cy="60" r="40" fill="white"/><circle cx="160" cy="20" r="30" fill="white"/><rect x="70" y="30" width="50" height="50" rx="12" fill="white" transform="rotate(20 95 55)"/></svg>`;
-    const frtL = document.createElement('div');
-    frtL.className = 'creative-layer creative-front';
-    const prod = document.createElement('div');
-    prod.className = 'product';
-    prod.textContent = '\u2B22';
-    frtL.appendChild(prod);
-
-    creative.append(bgL, midL, frtL);
-
-    // Parallax
-    shell.addEventListener('mousemove', (e) => {
-      const rect = creative.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      bgL.style.transform = `translate(${x * -6}px, ${y * -4}px) scale(1.06)`;
-      midL.style.transform = `translate(${x * 10}px, ${y * 8}px)`;
-      frtL.style.transform = `translate(${x * 16}px, ${y * 12}px)`;
+    // Parallax — rAF throttled for GPU perf
+    const panel = shadow.querySelector('.panel');
+    const bo = shadow.querySelector('.breakout');
+    let sideRaf = 0;
+    panel.addEventListener('mousemove', e => {
+      if (sideRaf) return;
+      sideRaf = requestAnimationFrame(() => {
+        const r = panel.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        bo.style.transform = 'translate(' + (x*-18) + 'px,' + (y*-12) + 'px)';
+        sideRaf = 0;
+      });
     });
-    shell.addEventListener('mouseleave', () => {
-      bgL.style.transform = 'translate(0,0) scale(1.06)';
-      midL.style.transform = 'translate(0,0)';
-      frtL.style.transform = 'translate(0,0)';
+    panel.addEventListener('mouseleave', () => { cancelAnimationFrame(sideRaf); sideRaf = 0; bo.style.transform = ''; });
+
+    shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'side', preset: state.preset, mode: state.mode }));
+    shadow.querySelector('.x').addEventListener('click', () => {
+      panel.style.transform = 'translateY(-50%) translateX(120%)'; panel.style.opacity = '0';
+      setTimeout(() => host.remove(), 400);
+      setDismissed('side'); logEvent('ff:ad:dismiss', { zone: 'side' });
     });
+    panel.addEventListener('keydown', e => { if (e.key === 'Escape') shadow.querySelector('.x').click(); });
 
-    // Text
-    const text = document.createElement('div');
-    text.className = 'text';
-    text.innerHTML = `
-      <span class="text-label">Sponsored</span>
-      <span class="text-headline">AI Agent Platform — Build & Deploy</span>
-      <span class="text-sub">Enterprise-grade. Unlimited agents. $7/mo.</span>
-      <div class="reveal-row">
-        <span class="chip chip-accent">Free Trial</span>
-        <span class="chip">99.99% Uptime</span>
-        <span class="chip">SOC 2</span>
-      </div>
-    `;
-
-    // QR
-    const qr = document.createElement('div');
-    qr.className = 'qr';
-    const qrBox = document.createElement('div');
-    qrBox.className = 'qr-box';
-    qrBox.innerHTML = generateQR('https://example.com/try-now', 48);
-    const qrHint = document.createElement('span');
-    qrHint.className = 'qr-hint';
-    qrHint.textContent = 'Scan';
-    qr.append(qrBox, qrHint);
-
-    // CTA
-    const cta = document.createElement('button');
-    cta.className = 'cta';
-    cta.textContent = 'Get Started';
-    cta.addEventListener('click', () => emitEvent('click', 'footer'));
-
-    // Controls
-    const controls = document.createElement('div');
-    controls.className = 'controls';
-    controls.innerHTML = `
-      <div class="ad-badge"><svg viewBox="0 0 16 16" fill="none"><path d="M8 1L15 14H1L8 1Z" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"/><text x="8" y="12" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="7" font-weight="700" font-family="sans-serif">i</text></svg></div>
-    `;
-    const dismissBtn = document.createElement('button');
-    dismissBtn.className = 'dismiss';
-    dismissBtn.setAttribute('aria-label', 'Dismiss advertisement');
-    dismissBtn.innerHTML = '&#10005;';
-    dismissBtn.addEventListener('click', () => dismissAd('footer'));
-    controls.appendChild(dismissBtn);
-
-    strip.append(creative, text, qr, cta, controls);
-    shell.appendChild(strip);
-    banner.appendChild(shell);
-    shadow.appendChild(banner);
-    document.documentElement.appendChild(footerHost);
-
-    // Keyboard dismiss
-    const kh = (e) => { if (e.key === 'Escape') { dismissAd('footer'); document.removeEventListener('keydown', kh); } };
-    document.addEventListener('keydown', kh);
-
-    emitEvent('loaded', 'footer');
-    setTimeout(() => { if (footerHost && footerHost.isConnected) emitEvent('impression', 'footer'); }, 1000);
+    logEvent('ff:ad:loaded', { zone: 'side' });
+    setTimeout(() => logEvent('ff:ad:impression', { zone: 'side' }), 800);
+    return host;
   }
 
-  // ── Dismiss handler ──
-  function dismissAd(zone) {
-    const host = zone === 'footer' ? footerHost : sideHost;
-    if (!host) return;
+  /* ══════════════════════════════════════════════════════════════
+     FOOTER BANNER — Full-bleed, breakout product, non-rectangular
+     ══════════════════════════════════════════════════════════════ */
+  function createFooterBanner() {
+    if (isDismissed('footer')) return null;
+    const host = document.createElement('div');
+    host.id = 'ff-footer-host';
+    host.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;contain:layout style;';
+    document.documentElement.appendChild(host);
+    const shadow = host.attachShadow({ mode: 'closed' });
+    const A = state.accent, G = state.mode === 'glass', P = state.preset;
 
-    const container = host.shadowRoot.querySelector('.footer-banner, .side-panel');
-    if (container) {
-      container.style.animation = zone === 'footer'
-        ? 'exit 0.22s cubic-bezier(0.55,0,1,0.45) forwards'
-        : 'slideOut 0.25s cubic-bezier(0.55,0,1,0.45) forwards';
-      container.addEventListener('animationend', () => { host.remove(); }, { once: true });
+    // Shape clip-paths per preset
+    const clips = {
+      capsule:   { d: 'polygon(1% 15%, 3% 0%, 97% 0%, 99% 15%, 100% 100%, 0% 100%)', m: 'polygon(0% 8%, 100% 0%, 100% 100%, 0% 100%)' },
+      angled:    { d: 'polygon(0% 35%, 4% 0%, 62% 0%, 66% 22%, 100% 22%, 100% 100%, 0% 100%)', m: 'polygon(0% 18%, 3% 0%, 100% 0%, 100% 100%, 0% 100%)' },
+      signature: { d: 'polygon(0% 42%, 6% 18%, 14% 38%, 22% 12%, 32% 28%, 42% 6%, 52% 22%, 62% 4%, 72% 20%, 82% 8%, 92% 26%, 96% 12%, 100% 28%, 100% 100%, 0% 100%)', m: 'polygon(0% 28%, 12% 14%, 28% 24%, 44% 8%, 58% 18%, 74% 6%, 88% 16%, 100% 20%, 100% 100%, 0% 100%)' }
+    };
+    const clip = clips[P];
+    const bg = G ? 'rgba(255,255,255,0.08)' : 'linear-gradient(95deg, #06060e 0%, ' + darken(A,0.22) + ' 45%, #0a0818 100%)';
 
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) host.remove();
-    } else { host.remove(); }
+    shadow.innerHTML = `
+      <style>
+        :host { all: initial; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    if (zone === 'footer') footerHost = null;
-    else sideHost = null;
+        .banner {
+          position: fixed; bottom: 0; left: 0; right: 0;
+          height: 150px;
+          pointer-events: auto; overflow: visible;
+          z-index: 2147483646;
+        }
 
-    setDismissed(zone);
-    emitEvent('dismiss', zone);
-  }
+        .shell {
+          position: absolute; inset: 0;
+          background: ${bg};
+          ${G ? '-webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1); backdrop-filter: blur(40px) saturate(180%) brightness(1.1); border-top: 1px solid rgba(255,255,255,0.18);' : ''}
+          clip-path: ${clip.d};
+          box-shadow: 0 -4px 40px rgba(0,0,0,0.45);
+          transition: clip-path 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+          .shell { background: rgba(10,10,22,0.92) !important; }
+        }
 
-  // ── Controls ──
-  function wireControls() {
-    document.getElementById('presetSelect').addEventListener('change', (e) => { CONFIG.preset = e.target.value; rebuild(); });
-    document.getElementById('modeToggle').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      document.querySelectorAll('#modeToggle button').forEach(x => x.classList.remove('active'));
-      b.classList.add('active'); CONFIG.mode = b.dataset.mode; rebuild();
-    });
-    document.getElementById('accentColor').addEventListener('input', (e) => { CONFIG.accent = e.target.value; rebuild(); });
-    document.getElementById('enableToggle').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      document.querySelectorAll('#enableToggle button').forEach(x => x.classList.remove('active'));
-      b.classList.add('active'); CONFIG.enabled = b.dataset.enabled === 'true';
-      if (CONFIG.enabled) rebuild();
-      else {
-        if (footerHost) { footerHost.remove(); footerHost = null; }
-        if (sideHost) { sideHost.remove(); sideHost = null; }
+        /* Glass inner highlight */
+        ${G ? `.shell::after { content:''; position:absolute; inset:0; clip-path:inherit; background: linear-gradient(175deg, rgba(255,255,255,0.14) 0%, transparent 35%, rgba(255,255,255,0.03) 100%); pointer-events:none; }` : ''}
+
+        /* ── Breakout product — extends ABOVE the banner ── */
+        .breakout {
+          position: absolute; bottom: 16px; left: 48px;
+          width: 210px; height: 220px;
+          z-index: 5;
+          box-shadow: 0 -10px 30px rgba(0,0,0,0.45);
+          transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+          cursor: pointer;
+        }
+        .breakout:hover { transform: translateY(-14px) scale(1.08) rotate(-3deg); }
+
+        /* Product — sneaker CSS art */
+        .product { width: 100%; height: 100%; position: relative; }
+        .shoe {
+          position: absolute; bottom: 8%; left: 5%; width: 90%; height: 52%;
+          background: linear-gradient(140deg, ${A}, ${darken(A,0.5)});
+          clip-path: polygon(5% 48%, 0% 78%, 12% 100%, 88% 100%, 100% 82%, 100% 42%, 88% 28%, 72% 18%, 52% 20%, 38% 12%, 22% 18%, 8% 32%);
+        }
+        .sole {
+          position: absolute; bottom: 6%; left: 10%; width: 78%; height: 12%;
+          background: #fff; opacity: 0.92;
+          clip-path: polygon(2% 0%, 98% 0%, 94% 100%, 6% 100%);
+        }
+        .swoosh {
+          position: absolute; bottom: 30%; left: 22%; width: 52%; height: 18%;
+          background: rgba(255,255,255,0.88);
+          clip-path: polygon(0% 100%, 100% 0%, 82% 0%, 0% 65%);
+        }
+        .midsole {
+          position: absolute; bottom: 14%; left: 14%; width: 68%; height: 8%;
+          background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+          border-radius: 4px;
+        }
+        /* Radial glow behind product */
+        .product::after {
+          content: ''; position: absolute; top: 45%; left: 50%;
+          transform: translate(-50%,-50%); width: 150%; height: 150%;
+          background: radial-gradient(ellipse, ${hexRgba(A,0.35)} 0%, transparent 60%);
+          z-index: -1;
+          /* Static glow — no infinite animation for GPU savings */
+        }
+
+        /* ── Content ── */
+        .content {
+          position: absolute; bottom: 0; left: 280px; right: 0; height: 100%;
+          display: flex; align-items: center; gap: 28px;
+          padding: 0 24px; padding-bottom: env(safe-area-inset-bottom, 0px);
+          z-index: 4;
+        }
+
+        .text { flex: 1; min-width: 0; }
+        .ad-tag { font: 600 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+        .brand-sm { font: 700 10px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+        .hl { font: 900 28px/1.0 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; color: #fff; text-transform: uppercase; text-shadow: 0 2px 20px rgba(0,0,0,0.6); }
+        .hl em { font-style: normal; color: ${A}; display: block; font-size: 38px; }
+        .sub { font: 400 11px/1.4 -apple-system, sans-serif; color: rgba(255,255,255,0.55); margin-top: 3px; }
+
+        /* Hover-to-reveal chips */
+        .chips { display: flex; gap: 6px; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.3s, opacity 0.3s, margin 0.3s; margin-top: 0; }
+        .banner:hover .chips { max-height: 36px; opacity: 1; margin-top: 6px; }
+        .chip {
+          font: 500 9px/1 -apple-system, sans-serif; padding: 4px 10px;
+          border: 1px solid rgba(255,255,255,0.18); border-radius: 14px;
+          color: rgba(255,255,255,0.65); white-space: nowrap; cursor: pointer;
+          transition: all 0.15s;
+        }
+        .chip:hover { background: ${hexRgba(A,0.2)}; border-color: ${A}; color: #fff; }
+
+        /* CTA — angular, not rectangular */
+        .cta {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 13px 30px 13px 18px;
+          background: ${A}; color: #fff;
+          font: 700 13px/1 -apple-system, sans-serif; text-transform: uppercase; letter-spacing: 1.2px;
+          border: none; cursor: pointer;
+          clip-path: polygon(0% 0%, 88% 0%, 100% 50%, 88% 100%, 0% 100%, 8% 50%);
+          min-height: 44px; min-width: 44px; flex-shrink: 0;
+          transition: transform 0.2s, filter 0.2s;
+        }
+        .cta:hover { transform: scale(1.06); filter: brightness(1.15); }
+        .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+        .qr { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; opacity: 0.3; transition: opacity 0.35s, transform 0.35s; transform: scale(0.92); }
+        .qr:hover { opacity: 1; transform: scale(1); }
+        .qr:hover svg { filter: drop-shadow(0 0 10px ${hexRgba(A,0.5)}); }
+        .qr svg { color: rgba(255,255,255,0.75); transition: filter 0.3s; }
+        .qr span { font: 500 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .dismiss {
+          position: absolute; top: 6px; right: 16px;
+          width: 28px; height: 28px; border-radius: 50%; border: none;
+          background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.5);
+          font-size: 14px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          z-index: 10; min-width: 44px; min-height: 44px;
+          opacity: 0; transition: opacity 0.2s;
+        }
+        .banner:hover .dismiss { opacity: 1; }
+        .dismiss:hover { background: rgba(0,0,0,0.5); color: #fff; }
+        .dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .banner { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+
+        @media (max-width: 767px) {
+          .banner { height: 125px; }
+          .shell { clip-path: ${clip.m}; }
+          .breakout { left: 10px; width: 120px; height: 140px; bottom: 8px; }
+          .content { left: 140px; gap: 12px; padding: 0 12px; }
+          .hl { font-size: 20px; }
+          .hl em { font-size: 26px; }
+          .cta { padding: 10px 20px 10px 14px; font-size: 11px; }
+          .qr { display: none; }
+        }
+        @media (max-height: 499px) and (orientation: landscape) {
+          .banner { height: 52px; }
+          .breakout { display: none; }
+          .content { left: 20px; }
+          .chips { display: none; }
+          .sub { display: none; }
+          .hl { font-size: 16px; }
+          .hl em { font-size: 18px; display: inline; }
+        }
+        @media (prefers-reduced-motion: reduce) { .banner { animation: none; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+      </style>
+
+      <div class="banner" role="complementary" aria-label="Advertisement">
+        <div class="shell"></div>
+
+        <div class="breakout">
+          <div class="breakout-img" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:inherit;overflow:hidden;opacity:0.3;mix-blend-mode:screen;"></div>
+          <div class="product">
+            <div class="shoe"></div>
+            <div class="sole"></div>
+            <div class="midsole"></div>
+            <div class="swoosh"></div>
+          </div>
+        </div>
+
+        <div class="content">
+          <div class="text">
+            <div class="ad-tag">Sponsored</div>
+            <div class="brand-sm">Performance Lab</div>
+            <div class="hl">Break<br><em>Every Limit</em></div>
+            <div class="sub">Performance engineered. Style redefined.</div>
+            <div class="chips">
+              <span class="chip">Lightweight</span>
+              <span class="chip">Responsive Foam</span>
+              <span class="chip">All-Terrain</span>
+            </div>
+          </div>
+          <button class="cta" tabindex="0">Shop Now &#9654;</button>
+          <div class="qr">
+            ${generateQR('https://brand.co/footer', 64)}
+            <span>Scan</span>
+          </div>
+        </div>
+
+        <button class="dismiss" aria-label="Dismiss advertisement" tabindex="0">&times;</button>
+      </div>`;
+
+    // Parallax on product — rAF throttled
+    const banner = shadow.querySelector('.banner');
+    // Apply uploaded image layers or fallback to default optimized image
+    if (state.optimizedLayers) {
+      applyLayersToBanner(shadow, 'footer');
+    } else {
+      var footBreakoutImg = shadow.querySelector('.breakout-img');
+      if (footBreakoutImg) {
+        var productImg = createOptimizedImage('product-hero', 'iigKHYY2d4d2eIiAe5h3iieHgHIH', 'Product breakout', '', 400, 267);
+        footBreakoutImg.appendChild(productImg);
       }
+    }
+
+    const bk = shadow.querySelector('.breakout');
+    let footRaf = 0;
+    banner.addEventListener('mousemove', e => {
+      if (footRaf) return;
+      footRaf = requestAnimationFrame(() => {
+        const r = banner.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        bk.style.transform = 'translate(' + (x*-22) + 'px,' + (y*-14) + 'px)';
+        footRaf = 0;
+      });
     });
-    document.getElementById('resetDismiss').addEventListener('click', () => { clearAll(); rebuild(); });
+    banner.addEventListener('mouseleave', () => { cancelAnimationFrame(footRaf); footRaf = 0; bk.style.transform = ''; });
+
+    shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'footer', preset: P, mode: state.mode }));
+    shadow.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => logEvent('ff:ad:interaction', { zone: 'footer', chip: c.textContent })));
+
+    shadow.querySelector('.dismiss').addEventListener('click', () => {
+      banner.style.transform = 'translateY(110%)'; banner.style.opacity = '0';
+      setTimeout(() => host.remove(), 400);
+      setDismissed('footer'); logEvent('ff:ad:dismiss', { zone: 'footer' });
+    });
+    banner.addEventListener('keydown', e => { if (e.key === 'Escape') shadow.querySelector('.dismiss').click(); });
+
+    logEvent('ff:ad:loaded', { zone: 'footer' });
+    setTimeout(() => logEvent('ff:ad:impression', { zone: 'footer' }), 800);
+    return host;
   }
 
-  function rebuild() { createFooterBanner(); createSidePanel(); }
+  /* ══ RENDER ══ */
+  function render() {
+    document.getElementById('ff-side-host')?.remove();
+    document.getElementById('ff-footer-host')?.remove();
+    if (!state.enabled) return;
+    createSidePanel();
+    createFooterBanner();
+  }
 
-  wireControls();
-  rebuild();
+  /* ══ CONFIG WIRING ══ */
+  function wire(id, cb) {
+    document.getElementById(id).querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      b.parentElement.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      cb(b.dataset.mode || b.dataset.preset || b.dataset.state);
+    }));
+  }
+  wire('modeToggle', v => { state.mode = v; render(); });
+  wire('presetToggle', v => { state.preset = v; render(); });
+  wire('adToggle', v => { state.enabled = v === 'on'; render(); });
+  document.getElementById('accentPicker').addEventListener('input', e => { state.accent = e.target.value; document.documentElement.style.setProperty('--accent', e.target.value); render(); });
+  document.getElementById('resetDismiss').addEventListener('click', () => {
+    try { localStorage.removeItem('ff_ad_dismissed_footer'); localStorage.removeItem('ff_ad_dismissed_side'); } catch {}
+    state.dismissed = { footer: false, side: false }; render();
+  });
+
+  /* ══ IMAGE OPTIMISER WIRING ══ */
+  document.getElementById('optimiserToggle').addEventListener('click', function() {
+    document.getElementById('imgOptimiser').classList.toggle('open');
+  });
+
+  document.getElementById('imgUpload').addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    var statusEl = document.getElementById('optimiserStatus');
+    statusEl.textContent = 'Loading image...';
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() { decomposeImage(img); };
+      img.onerror = function() { statusEl.textContent = 'Failed to load image.'; };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('imgUrl').addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var url = e.target.value.trim();
+    if (!url) return;
+    var statusEl = document.getElementById('optimiserStatus');
+    statusEl.textContent = 'Fetching image...';
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() { decomposeImage(img); };
+    img.onerror = function() { statusEl.textContent = 'Failed to load — CORS may be blocking. Try downloading and uploading instead.'; };
+    img.src = url;
+  });
+
+  render();
 })();
 </script>
 </body>
