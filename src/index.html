@@ -58,6 +58,250 @@
     padding: 5px; border-radius: 5px; z-index: 101; pointer-events: none; opacity: 0.6;
   }
   .event-log div { padding: 1px 0; }
+  .placement-status {
+    position: sticky;
+    top: 52px;
+    z-index: 99;
+    margin: 10px 16px 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(29,29,31,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(15,23,42,0.06);
+  }
+  .placement-status h2 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #2f3137;
+    margin-bottom: 6px;
+  }
+  .placement-status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .placement-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.06);
+    color: #334155;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .placement-summary-pill strong {
+    color: #0f172a;
+  }
+  .placement-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+  }
+  .placement-card {
+    border-radius: 10px;
+    border: 1px solid rgba(15,23,42,0.08);
+    background: rgba(248,250,252,0.9);
+    padding: 10px;
+  }
+  .placement-card.rendering {
+    border-color: rgba(22,163,74,0.25);
+    background: rgba(240,253,244,0.96);
+  }
+  .placement-card.skipped {
+    border-color: rgba(245,158,11,0.22);
+    background: rgba(255,251,235,0.96);
+  }
+  .placement-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .placement-card strong {
+    font-size: 11px;
+    color: #111827;
+  }
+  .placement-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .placement-chip.live {
+    background: rgba(22,163,74,0.12);
+    color: #15803d;
+  }
+  .placement-chip.skip {
+    background: rgba(245,158,11,0.14);
+    color: #b45309;
+  }
+  .placement-card p {
+    font-size: 10px;
+    line-height: 1.4;
+    color: #475569;
+  }
+  .placement-card code {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 9px;
+    background: rgba(148,163,184,0.12);
+    border-radius: 4px;
+    padding: 1px 4px;
+  }
+  .anchor-preview-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 98;
+  }
+  .anchor-preview-marker {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.84);
+    color: #f8fafc;
+    font-size: 10px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(15,23,42,0.18);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .anchor-preview-marker::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 0 4px rgba(52,211,153,0.15);
+  }
+  .anchor-preview-marker.skipped::before {
+    background: #f59e0b;
+    box-shadow: 0 0 0 4px rgba(245,158,11,0.18);
+  }
+  .editor-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 102;
+    pointer-events: none;
+  }
+  .editor-area {
+    position: fixed;
+    pointer-events: auto;
+    border-radius: 18px;
+    border: 2px solid rgba(59,130,246,0.85);
+    box-shadow: 0 20px 55px rgba(15,23,42,0.14);
+    overflow: hidden;
+    background: rgba(15,23,42,0.16);
+    user-select: none;
+  }
+  .editor-area.invalid {
+    border-color: rgba(239,68,68,0.92);
+    box-shadow: 0 20px 55px rgba(127,29,29,0.2);
+  }
+  .editor-media {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.2), transparent 40%),
+      var(--editor-media, linear-gradient(135deg, #6C5CE7, #341f97));
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.02);
+  }
+  .editor-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15,23,42,0.12), rgba(15,23,42,0.38));
+  }
+  .editor-head {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    z-index: 2;
+  }
+  .editor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.78);
+    color: #f8fafc;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .editor-badge::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #34d399;
+  }
+  .editor-area.invalid .editor-badge::before {
+    background: #f87171;
+  }
+  .editor-dims {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.88);
+    color: #0f172a;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .editor-note {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 2;
+    padding: 6px 8px;
+    border-radius: 10px;
+    max-width: calc(100% - 72px);
+    background: rgba(255,255,255,0.88);
+    color: #0f172a;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .editor-area.invalid .editor-note {
+    background: rgba(254,242,242,0.95);
+    color: #991b1b;
+  }
+  .editor-handle {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    right: 10px;
+    bottom: 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(15,23,42,0.12);
+    cursor: nwse-resize;
+    z-index: 3;
+  }
+  .editor-handle::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-right: 2px solid rgba(15,23,42,0.4);
+    border-bottom: 2px solid rgba(15,23,42,0.4);
+  }
 </style>
 </head>
 <body>
@@ -65,6 +309,14 @@
 <!-- ── Config Panel ── -->
 <div class="config-panel">
   <h1>Ad Builder</h1>
+  <div class="config-group">
+    <select id="placementPreset">
+      <option value="autopilot">Autopilot Mix</option>
+      <option value="footer-focus">Footer Focus</option>
+      <option value="side-spotlight">Side Spotlight</option>
+      <option value="preview-drop">Preview Drop</option>
+    </select>
+  </div>
   <div class="config-group">
     <select id="presetSelect">
       <option value="capsule">Capsule</option>
@@ -87,8 +339,34 @@
       <button data-enabled="false">Off</button>
     </div>
   </div>
+  <div class="config-group">
+    <div class="tg" id="previewToggle">
+      <button data-preview="false" class="active">Live</button>
+      <button data-preview="true">Preview</button>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="tg" id="editorToggle">
+      <button data-editor="false" class="active">View</button>
+      <button data-editor="true">Editor</button>
+    </div>
+  </div>
+  <div class="config-group">
+    <select id="editorTemplate">
+      <option value="optimal">Optimal</option>
+      <option value="balanced">Balanced</option>
+      <option value="compact">Compact</option>
+    </select>
+  </div>
+  <button class="btn-sm" id="resetTemplate">Reset Template</button>
   <button class="btn-sm" id="resetDismiss">Reset All</button>
 </div>
+
+<section class="placement-status" id="placementStatus">
+  <h2>Placement Runtime</h2>
+  <div class="placement-status-summary" id="placementStatusSummary"></div>
+  <div class="placement-status-grid" id="placementStatusGrid"></div>
+</section>
 
 <div class="event-log" id="eventLog"></div>
 
@@ -117,13 +395,147 @@
   'use strict';
 
   const CONFIG = {
+    placementPreset: 'autopilot',
     preset: 'capsule',
     mode: 'glass',
     accent: '#6C5CE7',
     enabled: true,
+    previewMode: false,
+    editorMode: false,
+    editorTemplate: 'optimal',
+    placementConfidenceFloor: 0.8,
     dismissKey: 'ff_dismissed_',
     dismissCooldown: 24 * 60 * 60 * 1000
   };
+  const ACTIVE_RESOLUTION = { footer: null, side: null };
+  const EDITOR_STATE = {
+    areas: {},
+    issues: {},
+    interaction: null
+  };
+  let rebuildQueued = false;
+
+  function getPlacementStore() {
+    const base = {
+      domainMatch: window.location.hostname,
+      pageMatchType: 'prefix',
+      pageMatchValue: '/',
+      pageTypes: ['article', 'landing', 'generic'],
+      environment: 'production',
+      enabled: true,
+      startAt: null,
+      endAt: null,
+      renderMode: 'dom'
+    };
+
+    const placements = {
+      autopilot: [
+        {
+          ...base,
+          placementId: 'placement-footer-primary',
+          anchorType: 'footer',
+          anchorId: 'anchor-footer-shell',
+          status: 'published',
+          creativeId: 'creative-footer-hero',
+          locationType: 'footer',
+          deviceTargets: ['desktop', 'tablet', 'mobile'],
+          priority: 20
+        },
+        {
+          ...base,
+          placementId: 'placement-side-primary',
+          anchorType: 'floating-right',
+          anchorId: 'anchor-right-rail',
+          status: 'published',
+          creativeId: 'creative-side-athlete',
+          locationType: 'floating',
+          pageTypes: ['article', 'landing'],
+          deviceTargets: ['desktop'],
+          priority: 10
+        },
+        {
+          ...base,
+          placementId: 'placement-inline-secondary',
+          anchorType: 'inline-article',
+          anchorId: 'anchor-inline-article-break',
+          status: 'published',
+          creativeId: 'creative-inline-brief',
+          locationType: 'inline',
+          pageTypes: ['article'],
+          deviceTargets: ['mobile', 'tablet'],
+          priority: 18
+        }
+      ],
+      'footer-focus': [
+        {
+          ...base,
+          placementId: 'placement-footer-featured',
+          anchorType: 'footer',
+          anchorId: 'anchor-footer-shell',
+          status: 'published',
+          creativeId: 'creative-footer-hero',
+          locationType: 'footer',
+          deviceTargets: ['desktop', 'tablet', 'mobile'],
+          priority: 30
+        }
+      ],
+      'side-spotlight': [
+        {
+          ...base,
+          placementId: 'placement-side-spotlight',
+          anchorType: 'floating-right',
+          anchorId: 'anchor-right-rail',
+          status: 'published',
+          creativeId: 'creative-side-athlete',
+          locationType: 'floating',
+          pageTypes: ['article', 'landing'],
+          deviceTargets: ['desktop'],
+          priority: 30
+        }
+      ],
+      'preview-drop': [
+        {
+          ...base,
+          placementId: 'placement-footer-live',
+          anchorType: 'footer',
+          anchorId: 'anchor-footer-shell',
+          status: 'published',
+          creativeId: 'creative-footer-hero',
+          locationType: 'footer',
+          deviceTargets: ['desktop', 'tablet', 'mobile'],
+          priority: 20
+        },
+        {
+          ...base,
+          placementId: 'placement-side-preview',
+          anchorType: 'floating-right',
+          anchorId: 'anchor-right-rail',
+          status: 'preview',
+          environment: 'preview',
+          creativeId: 'creative-side-athlete',
+          locationType: 'floating',
+          pageTypes: ['article', 'landing'],
+          deviceTargets: ['desktop'],
+          priority: 25
+        },
+        {
+          ...base,
+          placementId: 'placement-inline-preview',
+          anchorType: 'inline-article',
+          anchorId: 'anchor-inline-article-break',
+          status: 'preview',
+          environment: 'preview',
+          creativeId: 'creative-inline-brief',
+          locationType: 'inline',
+          pageTypes: ['article'],
+          deviceTargets: ['mobile', 'tablet', 'desktop'],
+          priority: 22
+        }
+      ]
+    };
+
+    return placements[CONFIG.placementPreset] || placements.autopilot;
+  }
 
   // ── QR Code Generator (lightweight, no dependency) ──
   // Generates a simple QR-like SVG pattern. For production, use a real QR lib.
@@ -199,18 +611,656 @@
     return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
   }
 
+  function getDeviceClass() {
+    if (window.innerWidth < 768) return 'mobile';
+    if (window.innerWidth < 1100) return 'tablet';
+    return 'desktop';
+  }
+
+  function getPageType() {
+    const article = document.querySelector('.article');
+    const hasArticleMeta = article && article.querySelector('.meta');
+    const paragraphCount = article ? article.querySelectorAll('p').length : 0;
+    if (article && hasArticleMeta && paragraphCount >= 4) return 'article';
+    if (document.querySelector('.hero-img')) return 'landing';
+    return 'generic';
+  }
+
+  function getPlacementRecommendation(pageType, deviceClass) {
+    if (pageType === 'article' && deviceClass === 'desktop') return 'autopilot';
+    if (pageType === 'article') return 'footer-focus';
+    if (pageType === 'landing' && deviceClass === 'desktop') return 'side-spotlight';
+    return 'footer-focus';
+  }
+
+  function getArticleBounds() {
+    const article = document.querySelector('.article');
+    return article ? article.getBoundingClientRect() : { left: 24, right: window.innerWidth - 24, top: 120, bottom: window.innerHeight - 120, width: window.innerWidth - 48 };
+  }
+
+  function buildEditorTemplate(template) {
+    const bounds = getArticleBounds();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const footerWidth = Math.min(bounds.width + 120, vw - 28);
+    const balancedFooterWidth = Math.min(bounds.width + 40, vw - 36);
+    const compactFooterWidth = Math.min(bounds.width, vw - 40);
+
+    const templates = {
+      optimal: {
+        footer: { x: (vw - footerWidth) / 2, y: vh - 126, width: footerWidth, height: 94 },
+        side: { x: vw - 302, y: Math.max(96, vh * 0.24), width: 286, height: 400 },
+        inline: { x: bounds.left, y: Math.max(170, bounds.top + 230), width: Math.min(bounds.width, 620), height: 176 }
+      },
+      balanced: {
+        footer: { x: (vw - balancedFooterWidth) / 2, y: vh - 122, width: balancedFooterWidth, height: 88 },
+        side: { x: vw - 286, y: Math.max(104, vh * 0.28), width: 270, height: 360 },
+        inline: { x: bounds.left + 8, y: Math.max(170, bounds.top + 220), width: Math.min(bounds.width - 16, 560), height: 164 }
+      },
+      compact: {
+        footer: { x: (vw - compactFooterWidth) / 2, y: vh - 112, width: compactFooterWidth, height: 80 },
+        side: { x: vw - 256, y: Math.max(108, vh * 0.32), width: 238, height: 312 },
+        inline: { x: bounds.left + 12, y: Math.max(176, bounds.top + 210), width: Math.min(bounds.width - 24, 500), height: 144 }
+      }
+    };
+
+    return templates[template] || templates.optimal;
+  }
+
+  function resetEditorAreas(template = CONFIG.editorTemplate) {
+    EDITOR_STATE.areas = buildEditorTemplate(template);
+    EDITOR_STATE.issues = {};
+  }
+
+  function ensureEditorAreas() {
+    if (!EDITOR_STATE.areas.footer || !EDITOR_STATE.areas.side || !EDITOR_STATE.areas.inline) {
+      resetEditorAreas(CONFIG.editorTemplate);
+    }
+  }
+
+  function validateEditorAreas() {
+    ensureEditorAreas();
+    const bounds = getArticleBounds();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rules = {
+      footer: {
+        minWidth: 320, maxWidth: vw - 20, minHeight: 72, maxHeight: 180,
+        validate: (area) => {
+          const issues = [];
+          if (area.y + area.height > vh - 6) issues.push('Footer should remain fully on screen.');
+          if (area.x < 8 || area.x + area.width > vw - 8) issues.push('Footer should stay inside the viewport with breathing room.');
+          return issues;
+        }
+      },
+      side: {
+        minWidth: 220, maxWidth: 360, minHeight: 260, maxHeight: 520,
+        validate: (area) => {
+          const issues = [];
+          if (area.x < vw * 0.48) issues.push('Side placement should stay in the right-hand safe zone.');
+          if (area.y < 80 || area.y + area.height > vh - 20) issues.push('Side placement must stay within the visible viewport.');
+          return issues;
+        }
+      },
+      inline: {
+        minWidth: 300, maxWidth: Math.max(320, bounds.width), minHeight: 120, maxHeight: 260,
+        validate: (area) => {
+          const issues = [];
+          if (area.x < bounds.left - 4 || area.x + area.width > bounds.right + 4) issues.push('Inline placement must stay aligned with the article column.');
+          if (area.y < bounds.top + 100 || area.y + area.height > bounds.bottom - 40) issues.push('Inline placement should remain within the article reading flow.');
+          return issues;
+        }
+      }
+    };
+
+    const issues = {};
+    let isValid = true;
+
+    Object.entries(rules).forEach(([zone, rule]) => {
+      const area = EDITOR_STATE.areas[zone];
+      const zoneIssues = [];
+      if (!area) {
+        zoneIssues.push('Placement area is missing.');
+      } else {
+        if (area.width < rule.minWidth || area.width > rule.maxWidth) zoneIssues.push(`Width must stay between ${rule.minWidth}px and ${Math.round(rule.maxWidth)}px.`);
+        if (area.height < rule.minHeight || area.height > rule.maxHeight) zoneIssues.push(`Height must stay between ${rule.minHeight}px and ${rule.maxHeight}px.`);
+        zoneIssues.push(...rule.validate(area));
+      }
+      issues[zone] = zoneIssues;
+      if (zoneIssues.length) isValid = false;
+    });
+
+    EDITOR_STATE.issues = issues;
+    return { isValid, issues };
+  }
+
+  function buildEvaluationContext(anchor) {
+    return {
+      hostname: window.location.hostname,
+      pathname: window.location.pathname || '/',
+      pageType: getPageType(),
+      deviceClass: getDeviceClass(),
+      previewMode: CONFIG.previewMode,
+      currentTime: Date.now(),
+      anchorId: anchor.anchorId,
+      anchorType: anchor.anchorType,
+      anchorConfidence: anchor.confidence
+    };
+  }
+
+  function describeReason(reasonCode) {
+    const labels = {
+      eligible: 'placement resolved cleanly',
+      platform_disabled: 'workspace switch is off',
+      dismissed: 'visitor dismissed this placement recently',
+      placement_disabled: 'placement is disabled',
+      anchor_low_confidence: 'anchor was detected but confidence is too low for no-code placement',
+      preview_only: 'placement is preview-only and live mode is active',
+      page_mismatch: 'page rule does not match this article route',
+      page_type_mismatch: 'placement is not targeted to this page type',
+      domain_mismatch: 'site/domain rule does not match',
+      device_mismatch: 'device class is not targeted',
+      not_started: 'scheduled start time has not arrived',
+      expired: 'placement is outside its live window',
+      anchor_type_mismatch: 'creative does not fit this anchor type',
+      no_matching_placement: 'no placement is configured for this anchor'
+    };
+    return labels[reasonCode] || reasonCode.replace(/_/g, ' ');
+  }
+
+  function detectAnchors() {
+    const article = document.querySelector('.article');
+    const header = document.querySelector('.page-header');
+    const anchors = [];
+
+    if (article) {
+      anchors.push({
+        anchorId: 'anchor-footer-shell',
+        anchorType: 'footer',
+        zone: 'footer',
+        label: 'Footer safe zone',
+        confidence: window.innerWidth < 420 ? 0.86 : 0.96,
+        previewPosition: () => ({
+          top: window.innerHeight - 54,
+          left: Math.max(20, (window.innerWidth * 0.5) - 70)
+        })
+      });
+    }
+
+    if (header) {
+      anchors.push({
+        anchorId: 'anchor-right-rail',
+        anchorType: 'floating-right',
+        zone: 'side',
+        label: 'Right rail anchor',
+        confidence: window.innerWidth >= 960 ? 0.94 : 0.62,
+        previewPosition: () => ({
+          top: Math.max(96, window.innerHeight * 0.42),
+          left: window.innerWidth - 190
+        })
+      });
+    }
+
+    if (article) {
+      const paragraphs = article.querySelectorAll('p');
+      if (paragraphs.length >= 3) {
+        const targetNode = paragraphs[2];
+        const inlineTarget = targetNode.getBoundingClientRect();
+        anchors.push({
+          anchorId: 'anchor-inline-article-break',
+          anchorType: 'inline-article',
+          zone: 'inline',
+          label: 'Inline article break',
+          node: targetNode,
+          confidence: 0.74,
+          previewPosition: () => ({
+            top: Math.max(140, inlineTarget.top + 120),
+            left: Math.max(24, inlineTarget.left)
+          })
+        });
+      }
+    }
+
+    return anchors;
+  }
+
+  function matchesPageRule(placement, context) {
+    if (!placement.pageMatchType || !placement.pageMatchValue) return true;
+    if (placement.pageMatchType === 'prefix') return context.pathname.startsWith(placement.pageMatchValue);
+    if (placement.pageMatchType === 'exact') return context.pathname === placement.pageMatchValue;
+    return true;
+  }
+
+  function matchesDeviceTarget(placement, context) {
+    return !placement.deviceTargets || placement.deviceTargets.includes(context.deviceClass);
+  }
+
+  function matchesPageType(placement, context) {
+    return !placement.pageTypes || placement.pageTypes.includes(context.pageType);
+  }
+
+  function evaluatePlacement(placement, anchor, context) {
+    if (!CONFIG.enabled) return { eligible: false, reasonCode: 'platform_disabled' };
+    if (isDismissed(anchor.zone)) return { eligible: false, reasonCode: 'dismissed' };
+    if (!placement.enabled) return { eligible: false, reasonCode: 'placement_disabled' };
+    if (anchor.confidence < CONFIG.placementConfidenceFloor) return { eligible: false, reasonCode: 'anchor_low_confidence' };
+    if (placement.environment === 'preview' && !context.previewMode) return { eligible: false, reasonCode: 'preview_only' };
+    if (!matchesPageRule(placement, context)) return { eligible: false, reasonCode: 'page_mismatch' };
+    if (!matchesPageType(placement, context)) return { eligible: false, reasonCode: 'page_type_mismatch' };
+    if (placement.domainMatch && placement.domainMatch !== context.hostname) return { eligible: false, reasonCode: 'domain_mismatch' };
+    if (!matchesDeviceTarget(placement, context)) return { eligible: false, reasonCode: 'device_mismatch' };
+    if (placement.startAt && context.currentTime < Date.parse(placement.startAt)) return { eligible: false, reasonCode: 'not_started' };
+    if (placement.endAt && context.currentTime > Date.parse(placement.endAt)) return { eligible: false, reasonCode: 'expired' };
+    if (placement.anchorType !== anchor.anchorType) return { eligible: false, reasonCode: 'anchor_type_mismatch' };
+    return { eligible: true, reasonCode: 'eligible' };
+  }
+
+  function resolvePlacementForAnchor(anchor, placements) {
+    const context = buildEvaluationContext(anchor);
+    const candidates = placements
+      .filter((placement) => placement.anchorType === anchor.anchorType)
+      .sort((a, b) => b.priority - a.priority);
+
+    for (const placement of candidates) {
+      const evaluation = evaluatePlacement(placement, anchor, context);
+      if (evaluation.eligible) {
+        return {
+          render: true,
+          zone: anchor.zone,
+          anchor,
+          context,
+          placement,
+          reasonCode: evaluation.reasonCode
+        };
+      }
+    }
+
+    const firstCandidate = candidates[0];
+    return {
+      render: false,
+      zone: anchor.zone,
+      anchor,
+      context,
+      placement: firstCandidate || null,
+      reasonCode: firstCandidate ? evaluatePlacement(firstCandidate, anchor, context).reasonCode : 'no_matching_placement'
+    };
+  }
+
+  function emitDecisionEvent(resolution) {
+    const detail = {
+      render: resolution.render,
+      zone: resolution.zone,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType,
+      reasonCode: resolution.reasonCode,
+      placementId: resolution.placement ? resolution.placement.placementId : null,
+      pageType: resolution.context.pageType,
+      deviceClass: resolution.context.deviceClass,
+      previewMode: resolution.context.previewMode,
+      timestamp: Date.now()
+    };
+    window.dispatchEvent(new CustomEvent('ff:ad:decision', { detail }));
+    if (!resolution.render) {
+      window.dispatchEvent(new CustomEvent('ff:ad:skip', { detail }));
+    }
+  }
+
+  function getEditorArea(zone) {
+    ensureEditorAreas();
+    return EDITOR_STATE.areas[zone] || null;
+  }
+
+  function renderEditorLayer() {
+    const existing = document.getElementById('editorLayer');
+    if (existing) existing.remove();
+    if (!CONFIG.editorMode) return;
+
+    validateEditorAreas();
+
+    const layer = document.createElement('div');
+    layer.id = 'editorLayer';
+    layer.className = 'editor-layer';
+    const areaMedia = {
+      footer: `linear-gradient(135deg, ${CONFIG.accent}, ${adjustColor(CONFIG.accent, -38)})`,
+      side: `linear-gradient(135deg, ${adjustColor(CONFIG.accent, 12)}, ${adjustColor(CONFIG.accent, -56)})`,
+      inline: `linear-gradient(135deg, ${adjustColor(CONFIG.accent, -16)}, ${adjustColor(CONFIG.accent, -54)})`
+    };
+
+    ['footer', 'side', 'inline'].forEach((zone) => {
+      const area = getEditorArea(zone);
+      if (!area) return;
+      const issues = EDITOR_STATE.issues[zone] || [];
+      const el = document.createElement('div');
+      el.className = `editor-area${issues.length ? ' invalid' : ''}`;
+      el.dataset.zone = zone;
+      el.style.left = `${area.x}px`;
+      el.style.top = `${area.y}px`;
+      el.style.width = `${area.width}px`;
+      el.style.height = `${area.height}px`;
+      el.style.setProperty('--editor-media', areaMedia[zone]);
+      el.innerHTML = `
+        <div class="editor-media"></div>
+        <div class="editor-tint"></div>
+        <div class="editor-head">
+          <span class="editor-badge">${zone} area</span>
+          <span class="editor-dims">${Math.round(area.width)}×${Math.round(area.height)}</span>
+        </div>
+        <div class="editor-note">${issues.length ? issues[0] : 'Drag to move. Use the corner handle to resize. Dynamic media fill keeps coverage stable.'}</div>
+        <div class="editor-handle" data-action="resize"></div>
+      `;
+      layer.appendChild(el);
+    });
+
+    document.body.appendChild(layer);
+  }
+
+  function startEditorInteraction(event) {
+    if (!CONFIG.editorMode) return;
+    const target = event.target.closest('.editor-area');
+    if (!target) return;
+    const zone = target.dataset.zone;
+    const area = getEditorArea(zone);
+    if (!area) return;
+
+    event.preventDefault();
+    EDITOR_STATE.interaction = {
+      zone,
+      mode: event.target.closest('.editor-handle') ? 'resize' : 'drag',
+      startX: event.clientX,
+      startY: event.clientY,
+      origin: { ...area }
+    };
+  }
+
+  function moveEditorInteraction(event) {
+    const active = EDITOR_STATE.interaction;
+    if (!active) return;
+
+    const dx = event.clientX - active.startX;
+    const dy = event.clientY - active.startY;
+    const next = { ...active.origin };
+    if (active.mode === 'drag') {
+      next.x = active.origin.x + dx;
+      next.y = active.origin.y + dy;
+    } else {
+      next.width = Math.max(120, active.origin.width + dx);
+      next.height = Math.max(90, active.origin.height + dy);
+    }
+    EDITOR_STATE.areas[active.zone] = next;
+    validateEditorAreas();
+    renderEditorLayer();
+  }
+
+  function stopEditorInteraction() {
+    if (!EDITOR_STATE.interaction) return;
+    EDITOR_STATE.interaction = null;
+    validateEditorAreas();
+    renderEditorLayer();
+  }
+
+  function removeRenderedAds() {
+    const inlineHost = document.getElementById('ff-inline-host');
+    if (inlineHost) inlineHost.remove();
+    const editorLayer = document.getElementById('editorLayer');
+    if (editorLayer) editorLayer.remove();
+    if (footerHost) { footerHost.remove(); footerHost = null; }
+    if (sideHost) { sideHost.remove(); sideHost = null; }
+    ACTIVE_RESOLUTION.footer = null;
+    ACTIVE_RESOLUTION.side = null;
+    clearPreviewAnchors();
+  }
+
+  function clearPreviewAnchors() {
+    const existing = document.getElementById('anchorPreviewLayer');
+    if (existing) existing.remove();
+  }
+
+  function renderPlacementStatus(anchors, resolutions) {
+    const summary = document.getElementById('placementStatusSummary');
+    const grid = document.getElementById('placementStatusGrid');
+    if (!grid || !summary) return;
+
+    const pageType = getPageType();
+    const deviceClass = getDeviceClass();
+    const recommendedPreset = getPlacementRecommendation(pageType, deviceClass);
+    summary.innerHTML = `
+      <span class="placement-summary-pill">Page Type <strong>${pageType}</strong></span>
+      <span class="placement-summary-pill">Device <strong>${deviceClass}</strong></span>
+      <span class="placement-summary-pill">Recommended <strong>${recommendedPreset}</strong></span>
+      <span class="placement-summary-pill">Selected <strong>${CONFIG.placementPreset}</strong></span>
+      <span class="placement-summary-pill">Mode <strong>${CONFIG.editorMode ? 'editor' : 'view'}</strong></span>
+    `;
+
+    grid.innerHTML = anchors.map((anchor) => {
+      const resolution = resolutions.find((item) => item.anchor.anchorId === anchor.anchorId);
+      const isRendering = Boolean(resolution && resolution.render);
+      const placementId = resolution && resolution.placement ? resolution.placement.placementId : 'none';
+      const reasonText = describeReason(resolution ? resolution.reasonCode : 'no_matching_placement');
+      const editorIssues = CONFIG.editorMode && EDITOR_STATE.issues[anchor.zone] ? EDITOR_STATE.issues[anchor.zone] : [];
+      return `
+        <article class="placement-card ${isRendering ? 'rendering' : 'skipped'}">
+          <div class="placement-card-head">
+            <strong>${anchor.label}</strong>
+            <span class="placement-chip ${isRendering ? 'live' : 'skip'}">${isRendering ? 'rendering' : 'skipped'}</span>
+          </div>
+          <p><code>${anchor.anchorType}</code> · confidence ${(anchor.confidence * 100).toFixed(0)}%</p>
+          <p>Placement: <code>${placementId}</code></p>
+          <p>${reasonText}</p>
+          ${editorIssues.length ? `<p>Editor guard rail: ${editorIssues[0]} Use Reset Template or drag/resize until valid.</p>` : ''}
+        </article>
+      `;
+    }).join('');
+  }
+
+  function renderPreviewAnchors(anchors, resolutions) {
+    clearPreviewAnchors();
+    if (!CONFIG.previewMode) return;
+
+    const layer = document.createElement('div');
+    layer.id = 'anchorPreviewLayer';
+    layer.className = 'anchor-preview-layer';
+
+    anchors.forEach((anchor) => {
+      if (typeof anchor.previewPosition !== 'function') return;
+      const resolution = resolutions.find((item) => item.anchor.anchorId === anchor.anchorId);
+      const marker = document.createElement('div');
+      const point = anchor.previewPosition();
+      marker.className = `anchor-preview-marker${resolution && !resolution.render ? ' skipped' : ''}`;
+      marker.style.top = `${point.top}px`;
+      marker.style.left = `${point.left}px`;
+      marker.textContent = resolution && resolution.render
+        ? `${anchor.label} · ready`
+        : `${anchor.label} · ${describeReason(resolution ? resolution.reasonCode : 'no_matching_placement')}`;
+      layer.appendChild(marker);
+    });
+
+    document.body.appendChild(layer);
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  //  INLINE ARTICLE BANNER (in-flow, safe-zone aware)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  function createInlineBanner(resolution) {
+    if (!resolution || !resolution.render || !resolution.anchor.node || !resolution.anchor.node.parentNode) return;
+
+    const existing = document.getElementById('ff-inline-host');
+    if (existing) existing.remove();
+
+    const host = document.createElement('div');
+    host.id = 'ff-inline-host';
+    const area = getEditorArea('inline');
+    const articleBounds = getArticleBounds();
+    const inlineWidth = area ? Math.min(articleBounds.width, area.width) : articleBounds.width;
+    const inlineOffset = area ? Math.max(0, area.x - articleBounds.left) : 0;
+    host.style.cssText = `margin: 24px 0; width:${inlineWidth}px; max-width:100%; transform:translateX(${inlineOffset}px);`;
+
+    const shadow = host.attachShadow({ mode: 'open' });
+    const accent = CONFIG.accent;
+    const accent2 = adjustColor(accent, -34);
+    const isGlass = CONFIG.mode === 'glass';
+
+    const style = document.createElement('style');
+    style.textContent = `
+      :host { display: block; }
+      .inline-banner {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        padding: 16px 18px;
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        ${isGlass
+          ? `background: rgba(15,23,42,0.68); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.14);`
+          : `background: linear-gradient(135deg, ${accent}, ${accent2}); border: 1px solid rgba(255,255,255,0.08);`
+        }
+        box-shadow: 0 18px 48px rgba(15,23,42,0.16);
+      }
+      .inline-banner::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(115deg, rgba(255,255,255,0.12), transparent 44%);
+        pointer-events: none;
+      }
+      .inline-layout {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+      }
+      .inline-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.72);
+      }
+      .inline-label::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: ${accent};
+        box-shadow: 0 0 0 4px ${accent}22;
+      }
+      .inline-title {
+        display: block;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        margin-bottom: 6px;
+      }
+      .inline-copy {
+        display: block;
+        font-size: 13px;
+        line-height: 1.5;
+        color: rgba(255,255,255,0.76);
+        max-width: 46ch;
+      }
+      .inline-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+      }
+      .inline-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 16px;
+        border-radius: 999px;
+        border: none;
+        background: #fff;
+        color: #0f172a;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .inline-meta {
+        font-size: 10px;
+        color: rgba(255,255,255,0.62);
+      }
+      @media (max-width: 720px) {
+        .inline-layout {
+          grid-template-columns: 1fr;
+        }
+        .inline-actions {
+          align-items: flex-start;
+        }
+      }
+    `;
+    shadow.appendChild(style);
+
+    const banner = document.createElement('section');
+    banner.className = 'inline-banner';
+    banner.setAttribute('role', 'complementary');
+    banner.setAttribute('aria-label', 'Advertisement');
+    banner.innerHTML = `
+      <div class="inline-layout">
+        <div>
+          <span class="inline-label">Sponsored Placement</span>
+          <span class="inline-title">Deploy AI agents without rebuilding your stack</span>
+          <span class="inline-copy">This inline placement is chosen automatically by the runtime when article-safe anchors and device rules match. Creators don’t edit markup to place it.</span>
+        </div>
+        <div class="inline-actions">
+          <button class="inline-chip" type="button">See Demo</button>
+          <span class="inline-meta">${resolution.placement.placementId}</span>
+        </div>
+      </div>
+    `;
+
+    const cta = banner.querySelector('.inline-chip');
+    cta.addEventListener('click', () => emitEvent('click', 'inline', {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    }));
+
+    shadow.appendChild(banner);
+    resolution.anchor.node.insertAdjacentElement('afterend', host);
+
+    emitEvent('loaded', 'inline', {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    });
+    setTimeout(() => {
+      const current = document.getElementById('ff-inline-host');
+      if (current && current.isConnected) {
+        emitEvent('impression', 'inline', {
+          placementId: resolution.placement.placementId,
+          anchorId: resolution.anchor.anchorId,
+          anchorType: resolution.anchor.anchorType
+        });
+      }
+    }, 600);
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   //  SIDE PANEL AD (right edge, interactive, layered)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   let sideHost = null;
 
-  function createSidePanel() {
+  function createSidePanel(resolution) {
     if (sideHost) { sideHost.remove(); sideHost = null; }
-    if (!CONFIG.enabled || isDismissed('side')) return;
+    if (!resolution || !resolution.render) return;
+    ACTIVE_RESOLUTION.side = resolution;
 
     sideHost = document.createElement('div');
     sideHost.id = 'ff-side-host';
-    sideHost.style.cssText = `position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:2147483646; pointer-events:none;`;
+    const area = getEditorArea('side');
+    sideHost.style.cssText = area
+      ? `position:fixed; top:${area.y}px; left:${area.x}px; width:${area.width}px; height:${area.height}px; z-index:2147483646; pointer-events:none;`
+      : `position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:2147483646; pointer-events:none;`;
 
     const shadow = sideHost.attachShadow({ mode: 'open' });
     const accent = CONFIG.accent;
@@ -223,7 +1273,8 @@
 
       .side-panel {
         pointer-events: auto;
-        width: 72px;
+        width: ${area ? `${Math.max(72, area.width)}px` : '72px'};
+        height: ${area ? `${Math.max(240, area.height)}px` : 'auto'};
         transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
         overflow: hidden;
         cursor: pointer;
@@ -238,7 +1289,7 @@
       }
 
       .side-panel:hover, .side-panel.expanded {
-        width: 280px;
+        width: ${area ? `${Math.max(200, area.width)}px` : '280px'};
         box-shadow: -8px 0 40px rgba(0,0,0,0.3);
       }
 
@@ -619,7 +1670,11 @@
     const cta = document.createElement('button');
     cta.className = 'side-cta';
     cta.textContent = 'Start Free Trial';
-    cta.addEventListener('click', () => emitEvent('click', 'side'));
+    cta.addEventListener('click', () => emitEvent('click', 'side', {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    }));
     content.appendChild(cta);
 
     // Dismiss
@@ -639,8 +1694,20 @@
     shadow.appendChild(panel);
     document.documentElement.appendChild(sideHost);
 
-    emitEvent('loaded', 'side');
-    setTimeout(() => { if (sideHost && sideHost.isConnected) emitEvent('impression', 'side'); }, 1000);
+    emitEvent('loaded', 'side', {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    });
+    setTimeout(() => {
+      if (sideHost && sideHost.isConnected) {
+        emitEvent('impression', 'side', {
+          placementId: resolution.placement.placementId,
+          anchorId: resolution.anchor.anchorId,
+          anchorType: resolution.anchor.anchorType
+        });
+      }
+    }, 1000);
   }
 
 
@@ -649,9 +1716,10 @@
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   let footerHost = null;
 
-  function createFooterBanner() {
+  function createFooterBanner(resolution) {
     if (footerHost) { footerHost.remove(); footerHost = null; }
-    if (!CONFIG.enabled || isDismissed('footer')) return;
+    if (!resolution || !resolution.render) return;
+    ACTIVE_RESOLUTION.footer = resolution;
 
     const accent = CONFIG.accent;
     const accent2 = adjustColor(accent, -40);
@@ -659,7 +1727,10 @@
 
     footerHost = document.createElement('div');
     footerHost.id = 'ff-footer-host';
-    footerHost.style.cssText = `position:fixed; bottom:0; left:0; right:0; z-index:2147483647; pointer-events:none; padding-bottom:env(safe-area-inset-bottom, 0px);`;
+    const area = getEditorArea('footer');
+    footerHost.style.cssText = area
+      ? `position:fixed; top:${area.y}px; left:${area.x}px; width:${area.width}px; height:${area.height}px; z-index:2147483647; pointer-events:none;`
+      : `position:fixed; bottom:0; left:0; right:0; z-index:2147483647; pointer-events:none; padding-bottom:env(safe-area-inset-bottom, 0px);`;
 
     const shadow = footerHost.attachShadow({ mode: 'open' });
 
@@ -678,6 +1749,7 @@
         pointer-events: auto;
         padding: 8px;
         animation: enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        height: ${area ? `${Math.max(76, area.height)}px` : 'auto'};
       }
       @keyframes enter {
         from { transform: translateY(100%); opacity: 0; }
@@ -693,7 +1765,7 @@
       .shell {
         position: relative;
         overflow: hidden;
-        max-width: 800px;
+        max-width: ${area ? `${area.width}px` : '800px'};
         margin-left: auto;
         margin-right: auto;
         ${isGlass
@@ -1005,7 +2077,11 @@
     const cta = document.createElement('button');
     cta.className = 'cta';
     cta.textContent = 'Get Started';
-    cta.addEventListener('click', () => emitEvent('click', 'footer'));
+    cta.addEventListener('click', () => emitEvent('click', 'footer', {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    }));
 
     // Controls
     const controls = document.createElement('div');
@@ -1030,13 +2106,26 @@
     const kh = (e) => { if (e.key === 'Escape') { dismissAd('footer'); document.removeEventListener('keydown', kh); } };
     document.addEventListener('keydown', kh);
 
-    emitEvent('loaded', 'footer');
-    setTimeout(() => { if (footerHost && footerHost.isConnected) emitEvent('impression', 'footer'); }, 1000);
+    emitEvent('loaded', 'footer', {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    });
+    setTimeout(() => {
+      if (footerHost && footerHost.isConnected) {
+        emitEvent('impression', 'footer', {
+          placementId: resolution.placement.placementId,
+          anchorId: resolution.anchor.anchorId,
+          anchorType: resolution.anchor.anchorType
+        });
+      }
+    }, 1000);
   }
 
   // ── Dismiss handler ──
   function dismissAd(zone) {
     const host = zone === 'footer' ? footerHost : sideHost;
+    const resolution = ACTIVE_RESOLUTION[zone];
     if (!host) return;
 
     const container = host.shadowRoot.querySelector('.footer-banner, .side-panel');
@@ -1051,14 +2140,25 @@
 
     if (zone === 'footer') footerHost = null;
     else sideHost = null;
+    ACTIVE_RESOLUTION[zone] = null;
 
     setDismissed(zone);
-    emitEvent('dismiss', zone);
+    emitEvent('dismiss', zone, resolution ? {
+      placementId: resolution.placement.placementId,
+      anchorId: resolution.anchor.anchorId,
+      anchorType: resolution.anchor.anchorType
+    } : {});
   }
 
   // ── Controls ──
   function wireControls() {
+    document.getElementById('placementPreset').addEventListener('change', (e) => { CONFIG.placementPreset = e.target.value; rebuild(); });
     document.getElementById('presetSelect').addEventListener('change', (e) => { CONFIG.preset = e.target.value; rebuild(); });
+    document.getElementById('editorTemplate').addEventListener('change', (e) => {
+      CONFIG.editorTemplate = e.target.value;
+      resetEditorAreas(CONFIG.editorTemplate);
+      rebuild();
+    });
     document.getElementById('modeToggle').addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
       document.querySelectorAll('#modeToggle button').forEach(x => x.classList.remove('active'));
@@ -1069,18 +2169,76 @@
       const b = e.target.closest('button'); if (!b) return;
       document.querySelectorAll('#enableToggle button').forEach(x => x.classList.remove('active'));
       b.classList.add('active'); CONFIG.enabled = b.dataset.enabled === 'true';
-      if (CONFIG.enabled) rebuild();
-      else {
-        if (footerHost) { footerHost.remove(); footerHost = null; }
-        if (sideHost) { sideHost.remove(); sideHost = null; }
+      rebuild();
+    });
+    document.getElementById('previewToggle').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      document.querySelectorAll('#previewToggle button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      CONFIG.previewMode = b.dataset.preview === 'true';
+      rebuild();
+    });
+    document.getElementById('editorToggle').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      const nextEditorMode = b.dataset.editor === 'true';
+      if (!nextEditorMode && CONFIG.editorMode) {
+        const validation = validateEditorAreas();
+        if (!validation.isValid) {
+          window.alert('Editor cannot close while placement areas are invalid. Use Reset Template or drag/resize the highlighted areas back into a safe state.');
+          return;
+        }
       }
+      document.querySelectorAll('#editorToggle button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      CONFIG.editorMode = nextEditorMode;
+      if (CONFIG.editorMode) ensureEditorAreas();
+      rebuild();
+    });
+    document.getElementById('resetTemplate').addEventListener('click', () => {
+      resetEditorAreas(CONFIG.editorTemplate);
+      rebuild();
     });
     document.getElementById('resetDismiss').addEventListener('click', () => { clearAll(); rebuild(); });
+    document.addEventListener('mousedown', startEditorInteraction);
+    document.addEventListener('mousemove', moveEditorInteraction);
+    document.addEventListener('mouseup', stopEditorInteraction);
   }
 
-  function rebuild() { createFooterBanner(); createSidePanel(); }
+  function rebuild() {
+    rebuildQueued = false;
+    removeRenderedAds();
+    ensureEditorAreas();
+    validateEditorAreas();
+    const placements = getPlacementStore();
+    const anchors = detectAnchors();
+    const resolutions = [];
+    const adapters = {
+      inline: createInlineBanner,
+      footer: createFooterBanner,
+      side: createSidePanel
+    };
+
+    anchors.forEach((anchor) => {
+      const resolution = resolvePlacementForAnchor(anchor, placements);
+      resolutions.push(resolution);
+      emitDecisionEvent(resolution);
+      if (resolution.render && adapters[anchor.zone]) adapters[anchor.zone](resolution);
+      else logEvent(`${anchor.zone}:skip:${resolution.reasonCode}`);
+    });
+
+    renderPlacementStatus(anchors, resolutions);
+    renderPreviewAnchors(anchors, resolutions);
+    renderEditorLayer();
+  }
+
+  function queueRebuild() {
+    if (rebuildQueued) return;
+    rebuildQueued = true;
+    window.requestAnimationFrame(rebuild);
+  }
 
   wireControls();
+  window.addEventListener('resize', queueRebuild);
   rebuild();
 })();
 </script>
