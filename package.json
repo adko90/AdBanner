@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "optimize-images": "node scripts/optimize-images.mjs",
-    "verify:serve": "node scripts/serve-verification.mjs"
+    "verify:serve": "node scripts/serve-verification.mjs",
+    "postinstall": "npx playwright install chromium webkit"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "jsdom": "^26.0.0",
+    "playwright": "^1.58.0",
     "sharp": "^0.33.2",
     "thumbhash": "^0.1.1"
   }

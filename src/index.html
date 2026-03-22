@@ -42,6 +42,7 @@
   .tg button.active { background: #fff; color: var(--panel-text); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
   .btn-sm { font-size: 10px; padding: 3px 8px; border: 1px solid var(--panel-border); border-radius: 5px; background: #fff; cursor: pointer; font-family: inherit; color: var(--panel-muted); }
   .btn-sm:hover { background: #f0f0f0; }
+  .btn-sm:disabled { opacity: 0.45; cursor: not-allowed; }
   .config-group input[type="color"] { width: 24px; height: 20px; padding: 0; border: 1px solid var(--panel-border); border-radius: 4px; cursor: pointer; }
 
   /* ── Image Optimiser Panel ── */
@@ -95,6 +96,8 @@
   .placement-card p { font-size: 10px; line-height: 1.4; color: #475569; }
   .placement-card code { font-family: 'SF Mono', Monaco, monospace; font-size: 9px; background: rgba(148,163,184,0.12); border-radius: 4px; padding: 1px 4px; }
   .install-panel {
+    position: relative;
+    z-index: 9996;
     margin: 10px 16px 0;
     padding: 12px 14px;
     border: 1px solid rgba(29,29,31,0.08);
@@ -127,8 +130,11 @@
     white-space: pre-wrap;
     overflow-x: auto;
   }
-  .editor-layer { position: fixed; inset: 0; z-index: 10001; pointer-events: none; }
-  .editor-area { position: fixed; pointer-events: auto; border-radius: 18px; border: 2px solid rgba(59,130,246,0.85); box-shadow: 0 20px 55px rgba(15,23,42,0.14); overflow: hidden; background: rgba(15,23,42,0.16); user-select: none; }
+  .editor-layer { display: none; position: fixed; inset: 0; z-index: 10001; pointer-events: none; }
+  body.is-editor-mode #editorLayer,
+  body.is-preview-mode #anchorPreviewLayer { display: block; }
+  .editor-area { display: none; position: fixed; pointer-events: auto; border-radius: 18px; border: 2px solid rgba(59,130,246,0.85); box-shadow: 0 20px 55px rgba(15,23,42,0.14); overflow: hidden; background: rgba(15,23,42,0.16); user-select: none; }
+  body.is-editor-mode #editorLayer .editor-area { display: block; }
   .editor-area.invalid { border-color: rgba(239,68,68,0.92); box-shadow: 0 20px 55px rgba(127,29,29,0.2); }
   .editor-media { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent 40%), var(--editor-media, linear-gradient(135deg, #6C5CE7, #341f97)); background-size: cover; background-position: center; transform: scale(1.02); }
   .editor-tint { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.12), rgba(15,23,42,0.38)); }
@@ -137,13 +143,15 @@
   .editor-badge::before { content: ''; width: 7px; height: 7px; border-radius: 999px; background: #34d399; }
   .editor-area.invalid .editor-badge::before { background: #f87171; }
   .editor-dims { padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,0.88); color: #0f172a; font-size: 10px; font-weight: 700; }
-  .editor-note { position: absolute; left: 12px; bottom: 12px; z-index: 2; padding: 6px 8px; border-radius: 10px; max-width: calc(100% - 72px); background: rgba(255,255,255,0.88); color: #0f172a; font-size: 10px; line-height: 1.35; }
+  .editor-note { display: none; position: absolute; left: 12px; bottom: 12px; z-index: 2; padding: 6px 8px; border-radius: 10px; max-width: calc(100% - 72px); background: rgba(255,255,255,0.88); color: #0f172a; font-size: 10px; line-height: 1.35; }
+  body.is-editor-mode #editorLayer .editor-note,
+  body.is-preview-mode #anchorPreviewLayer .editor-note { display: block; }
   .editor-area.invalid .editor-note { background: rgba(254,242,242,0.95); color: #991b1b; }
   .editor-handle { position: absolute; width: 18px; height: 18px; right: 10px; bottom: 10px; border-radius: 6px; background: rgba(255,255,255,0.95); border: 1px solid rgba(15,23,42,0.12); cursor: nwse-resize; z-index: 3; }
   .editor-handle::before { content: ''; position: absolute; inset: 4px; border-right: 2px solid rgba(15,23,42,0.4); border-bottom: 2px solid rgba(15,23,42,0.4); }
 
   /* ── Publisher Page ── */
-  .page-header { background: #0a0a0a; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .page-header { position: relative; z-index: 9995; background: #0a0a0a; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
   .page-header .logo { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -1px; }
   .page-header .logo span { color: var(--accent); }
   .page-header nav { display: flex; gap: 14px; }
@@ -268,6 +276,8 @@
       <input type="text" id="publishSiteId" value="site_demo" spellcheck="false">
     </div>
     <button class="btn-sm" id="publishConfig">Publish Runtime Config</button>
+    <button class="btn-sm" id="rollbackConfig">Rollback Live Config</button>
+    <button class="btn-sm" id="killSwitchToggle">Emergency Stop Live</button>
     <a class="btn-sm install-link" id="verifyHostLink" href="./verify-host.html?site=site_demo" target="_blank" rel="noreferrer">Open Verification Host</a>
   </div>
   <p class="install-meta" id="publishMeta">Publish saves the current placement preset and safe-zone geometry as the live runtime config for the selected site. The verification host loads that config through the same one-time install snippet a creator would place on their site.</p>
@@ -330,6 +340,60 @@
   const editorState = { areas: {}, issues: {}, lastValidAreas: {}, interaction: null };
   let rebuildQueued = false;
   const placementConfidenceFloor = 0.7;
+  const collisionPadding = { footer: 18, side: 14, inline: 8 };
+  const managedSurfacePolicy = {
+    footer: {
+      surfaceId: 'footer-sticky-zone',
+      label: 'Footer safe zone',
+      region: 'footer',
+      category: 'allowed',
+      anchorType: 'footer',
+      behavior: 'sticky-edge'
+    },
+    side: {
+      surfaceId: 'right-rail-zone',
+      label: 'Right rail safe zone',
+      region: 'rail',
+      category: 'allowed',
+      anchorType: 'floating-right',
+      behavior: 'desktop-edge'
+    },
+    inline: {
+      surfaceId: 'inline-article-zone',
+      label: 'Inline article safe zone',
+      region: 'content',
+      category: 'allowed',
+      anchorType: 'inline-article',
+      behavior: 'in-flow'
+    }
+  };
+  const protectedRegionCatalog = [
+    {
+      kind: 'navigation',
+      label: 'navigation or header',
+      selectors: ['.page-header', 'header', 'nav', '[role="navigation"]']
+    },
+    {
+      kind: 'form',
+      label: 'form or input surface',
+      selectors: ['form', '[role="form"]', 'input', 'textarea', 'select']
+    },
+    {
+      kind: 'consent',
+      label: 'cookie or consent manager',
+      selectors: ['[id*="cookie"]', '[class*="cookie"]', '[id*="consent"]', '[class*="consent"]']
+    },
+    {
+      kind: 'chat',
+      label: 'chat launcher or support widget',
+      selectors: ['[id*="chat"]', '[class*="chat"]', '[id*="intercom"]', '[class*="intercom"]']
+    },
+    {
+      kind: 'dialog',
+      label: 'modal or dialog',
+      selectors: ['dialog[open]', '[role="dialog"]', '[aria-modal="true"]']
+    }
+  ];
 
   /* ══ HELPERS ══ */
   const logEl = document.getElementById('eventLog');
@@ -375,11 +439,90 @@
     if (getPageType() === 'article' && getInlineTargetNode()) zones.push('inline');
     return zones;
   }
+  function getManagedSurface(zone) { return managedSurfacePolicy[zone] || null; }
   function clamp(value, min, max) {
     const safeMin = Number.isFinite(min) ? min : value;
     const safeMax = Number.isFinite(max) ? max : value;
     if (safeMax < safeMin) return safeMin;
     return Math.min(Math.max(value, safeMin), safeMax);
+  }
+  function areaToRect(area) {
+    if (!area) return null;
+    return {
+      left: area.x,
+      top: area.y,
+      right: area.x + area.width,
+      bottom: area.y + area.height,
+      width: area.width,
+      height: area.height
+    };
+  }
+  function rectsOverlap(a, b, padding = 0) {
+    if (!a || !b) return false;
+    return !(a.right <= (b.left - padding) || a.left >= (b.right + padding) || a.bottom <= (b.top - padding) || a.top >= (b.bottom + padding));
+  }
+  function shouldIgnoreProtectedNode(node) {
+    return !!node.closest('.config-panel, .placement-status, .install-panel, .event-log, #editorLayer, #anchorPreviewLayer, [id^="ff-"], [data-ff-ignore-protection]');
+  }
+  function collectProtectedRegions() {
+    const seen = new Set();
+    const regions = [];
+    function pushRegion(node, kind, label) {
+      if (!node || seen.has(node) || shouldIgnoreProtectedNode(node)) return;
+      const rect = node.getBoundingClientRect();
+      const style = window.getComputedStyle(node);
+      if (!rect.width || !rect.height || style.display === 'none' || style.visibility === 'hidden') return;
+      seen.add(node);
+      regions.push({
+        node,
+        kind,
+        label,
+        rect: {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height
+        },
+        position: style.position
+      });
+    }
+    protectedRegionCatalog.forEach((spec) => {
+      spec.selectors.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((node) => pushRegion(node, spec.kind, spec.label));
+      });
+    });
+    Array.from(document.body.children).forEach((node) => {
+      if (shouldIgnoreProtectedNode(node)) return;
+      const style = window.getComputedStyle(node);
+      if (!['fixed', 'sticky'].includes(style.position)) return;
+      const rect = node.getBoundingClientRect();
+      if (rect.width < 44 || rect.height < 44) return;
+      pushRegion(node, 'sticky-ui', 'sticky site control');
+    });
+    return regions;
+  }
+  function findProtectedCollision(zone, protectedRegions, areaRect) {
+    if (!areaRect) return null;
+    return protectedRegions.find((region) => rectsOverlap(areaRect, region.rect, collisionPadding[zone] || 8)) || null;
+  }
+  function buildPublishedPolicy() {
+    return {
+      schemaVersion: 1,
+      collisionPadding,
+      surfaces: Object.values(managedSurfacePolicy),
+      protectedRegions: protectedRegionCatalog.map((spec) => ({
+        kind: spec.kind,
+        label: spec.label,
+        selectors: spec.selectors
+      })),
+      constraints: {
+        failClosed: true,
+        noSelectorEditing: true,
+        noProtectedRegionRendering: true
+      }
+    };
   }
   function getZoneRules() {
     const bounds = getArticleBounds();
@@ -494,6 +637,7 @@
   function validateEditorAreas() {
     ensureEditorAreas();
     const rules = getZoneRules();
+    const protectedRegions = collectProtectedRegions();
     const issues = { footer: [], side: [], inline: [] };
     let isValid = true;
     getManagedZones().forEach((zone) => {
@@ -508,6 +652,8 @@
       if (area.width < rule.minWidth || area.width > rule.maxWidth) zoneIssues.push(`Width must stay between ${Math.round(rule.minWidth)}px and ${Math.round(rule.maxWidth)}px.`);
       if (area.height < rule.minHeight || area.height > rule.maxHeight) zoneIssues.push(`Height must stay between ${Math.round(rule.minHeight)}px and ${Math.round(rule.maxHeight)}px.`);
       zoneIssues.push(...rule.validate(area));
+      const collision = findProtectedCollision(zone, protectedRegions, areaToRect(area));
+      if (collision) zoneIssues.push(`Protected region conflict: ${collision.label}. Move or resize this placement before leaving Editor or publishing.`);
       issues[zone] = zoneIssues;
       if (zoneIssues.length) {
         isValid = false;
@@ -530,8 +676,15 @@
     const fallback = buildEditorTemplate(state.editorTemplate)[zone];
     return fallback ? clampEditorArea(zone, fallback) : null;
   }
-  function clearEditorLayer() { document.getElementById('editorLayer')?.remove(); }
-  function clearPreviewAnchors() { document.getElementById('anchorPreviewLayer')?.remove(); }
+  function clearEditorLayer() {
+    document.getElementById('editorLayer')?.remove();
+    document.querySelectorAll('.editor-layer').forEach((node) => {
+      if (node.id !== 'anchorPreviewLayer') node.remove();
+    });
+  }
+  function clearPreviewAnchors() {
+    document.getElementById('anchorPreviewLayer')?.remove();
+  }
   function describeReason(reasonCode) {
     const labels = {
       eligible: 'placement resolved cleanly',
@@ -539,6 +692,9 @@
       dismissed: 'visitor dismissed this placement recently',
       placement_disabled: 'placement is disabled',
       anchor_low_confidence: 'anchor was detected but confidence is too low for no-code placement',
+      kill_switch_active: 'live runtime kill switch is active',
+      protected_region_collision: 'the resolved placement would overlap a protected region',
+      surface_blocked: 'surface policy marked this region as protected',
       preview_only: 'placement is preview-only and live mode is active',
       page_type_mismatch: 'placement is not targeted to this page type',
       device_mismatch: 'device class is not targeted',
@@ -570,14 +726,27 @@
     return placements[state.placementPreset] || placements.autopilot;
   }
   function getScriptInstallSnippet(siteId) {
-    return `<script>window.FF_AD_SITE = "${siteId}";</script>\n<script async src="/runtime/ad-placement-loader.js" data-config="/api/published/${siteId}.json"></script>`;
+    return `<script>window.FF_AD_SITE = "${siteId}";<` +
+      `/script>\n<script async src="/runtime/ad-placement-loader.js" data-config="/api/published/${siteId}.json"><` +
+      `/script>`;
   }
   function getPublishedConfigKey(siteId) {
     return `ff_published_site_${siteId}`;
   }
+  function getPublishedBackupKey(siteId) {
+    return `ff_published_site_backup_${siteId}`;
+  }
   function getPublishedConfig(siteId) {
     try {
       const raw = localStorage.getItem(getPublishedConfigKey(siteId));
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+  function getPublishedBackupConfig(siteId) {
+    try {
+      const raw = localStorage.getItem(getPublishedBackupKey(siteId));
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
@@ -632,10 +801,15 @@
         accent: state.accent,
         visualMode: state.mode,
         shapePreset: state.preset,
-        confidenceFloor: placementConfidenceFloor
+        confidenceFloor: placementConfidenceFloor,
+        killSwitch: false,
+        liveEnabled: true,
+        failClosed: true,
+        isolationMode: 'shadow-dom'
       },
       placements: getPlacementLibrary(),
       areaOverrides: serializePublishedAreas(),
+      policy: buildPublishedPolicy(),
       installSnippet: getScriptInstallSnippet(siteId)
     };
   }
@@ -653,21 +827,54 @@
     const verifyHostLink = document.getElementById('verifyHostLink');
     const publishMeta = document.getElementById('publishMeta');
     const publishState = document.getElementById('publishState');
+    const rollbackButton = document.getElementById('rollbackConfig');
+    const killSwitchButton = document.getElementById('killSwitchToggle');
     const publishedConfig = getPublishedConfig(siteId);
+    const backupConfig = getPublishedBackupConfig(siteId);
     const isCurrentLive = publishedConfig && getPublishSignature(publishedConfig) === getPublishSignature(buildPublishedConfig(siteId));
+    const isKillSwitched = !!(publishedConfig && publishedConfig.runtime && publishedConfig.runtime.killSwitch);
     if (installSnippet) installSnippet.textContent = getScriptInstallSnippet(siteId);
     if (verifyHostLink) verifyHostLink.href = `./verify-host.html?site=${encodeURIComponent(siteId)}`;
+    if (rollbackButton) rollbackButton.disabled = !backupConfig && !window.location.protocol.startsWith('http');
+    if (killSwitchButton) killSwitchButton.textContent = isKillSwitched ? 'Resume Live Config' : 'Emergency Stop Live';
     if (publishState) {
       publishState.className = `publish-pill ${isCurrentLive ? 'live' : 'draft'}`;
-      publishState.textContent = isCurrentLive ? 'Published' : publishedConfig ? 'Changes pending' : 'Draft only';
+      publishState.textContent = isKillSwitched ? 'Emergency stop' : isCurrentLive ? 'Published' : publishedConfig ? 'Changes pending' : 'Draft only';
     }
     if (publishMeta) {
       publishMeta.textContent = isCurrentLive
-        ? `Live config for ${siteId} was published at ${new Date(publishedConfig.publishedAt).toLocaleString()}. Open the verification host to confirm the loader renders the current placements without touching markup.`
+        ? `Live config for ${siteId} was published at ${new Date(publishedConfig.publishedAt).toLocaleString()}. ${isKillSwitched ? 'The emergency stop is active, so the loader should no-render on the host until it is resumed.' : 'Open the verification host to confirm the loader renders the current placements without touching markup.'}`
         : publishedConfig
-          ? `There is already a live config for ${siteId}, but the editor has unpublished changes. Publish again to update the verification host.`
-        : `Publish saves the current placement preset and safe-zone geometry as the live runtime config for ${siteId}. The verification host loads that config through the same one-time install snippet a creator would place on their site.`;
+          ? `There is already a live config for ${siteId}, but the editor has unpublished changes.${backupConfig ? ' A rollback snapshot is available if the current live config needs to be reversed.' : ''}`
+        : `Publish saves the current placement preset, safe-zone geometry, and surface-protection policy as the live runtime config for ${siteId}. The verification host loads that config through the same one-time install snippet a creator would place on their site.`;
     }
+  }
+  async function publishRuntimeConfig(siteId, payload, options = {}) {
+    const preserveBackup = options.preserveBackup !== false;
+    const serialized = JSON.stringify(payload);
+    const current = getPublishedConfig(siteId);
+    if (preserveBackup && current) {
+      localStorage.setItem(getPublishedBackupKey(siteId), JSON.stringify(current));
+    }
+    if (window.location.protocol.startsWith('http')) {
+      const response = await fetch(`/api/publish/${encodeURIComponent(siteId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: serialized
+      });
+      if (!response.ok) throw new Error(`Publish endpoint failed: ${response.status}`);
+    }
+    localStorage.setItem(getPublishedConfigKey(siteId), serialized);
+    updateInstallPanel();
+    return payload;
+  }
+  async function loadRollbackPayload(siteId) {
+    const local = getPublishedBackupConfig(siteId);
+    if (local) return local;
+    if (!window.location.protocol.startsWith('http')) return null;
+    const response = await fetch(`/api/published-backup/${encodeURIComponent(siteId)}.json`, { credentials: 'same-origin' });
+    if (!response.ok) return null;
+    return response.json();
   }
   function detectAnchors() {
     const anchors = [];
@@ -680,6 +887,7 @@
         zone: 'footer',
         label: 'Footer safe zone',
         confidence: window.innerWidth < 420 ? 0.86 : 0.96,
+        surface: getManagedSurface('footer'),
         previewPosition: () => ({ top: window.innerHeight - 72, left: Math.max(24, (window.innerWidth * 0.5) - 84) })
       });
     }
@@ -690,6 +898,7 @@
         zone: 'side',
         label: 'Right rail anchor',
         confidence: window.innerWidth >= 1180 ? 0.94 : 0.74,
+        surface: getManagedSurface('side'),
         previewPosition: () => ({ top: Math.max(108, window.innerHeight * 0.34), left: window.innerWidth - 208 })
       });
     }
@@ -703,44 +912,55 @@
         label: 'Inline article break',
         node: inlineTarget,
         confidence: 0.78,
+        surface: getManagedSurface('inline'),
         previewPosition: () => ({ top: Math.max(160, rect.top + 120), left: Math.max(32, rect.left) })
       });
     }
     return anchors;
   }
-  function buildEvaluationContext(anchor) {
+  function buildEvaluationContext(anchor, protectedRegions) {
     return {
       pageType: getPageType(),
       deviceClass: getDeviceClass(),
       previewMode: state.previewMode,
       anchorId: anchor.anchorId,
       anchorType: anchor.anchorType,
-      anchorConfidence: anchor.confidence
+      anchorConfidence: anchor.confidence,
+      protectedRegions,
+      surface: anchor.surface || null
     };
   }
   function matchesPageType(placement, context) { return !placement.pageTypes || placement.pageTypes.includes(context.pageType); }
   function matchesDeviceTarget(placement, context) { return !placement.deviceTargets || placement.deviceTargets.includes(context.deviceClass); }
+  function getAnchorAreaRect(anchor) {
+    const area = getRenderableArea(anchor.zone);
+    return areaToRect(area);
+  }
   function evaluatePlacement(placement, anchor, context) {
     if (!state.enabled) return { eligible: false, reasonCode: 'workspace_disabled' };
     if (isDismissed(anchor.zone)) return { eligible: false, reasonCode: 'dismissed' };
     if (!placement.enabled) return { eligible: false, reasonCode: 'placement_disabled' };
+    if (context.surface && context.surface.category === 'protected') return { eligible: false, reasonCode: 'surface_blocked' };
     if (anchor.confidence < placementConfidenceFloor) return { eligible: false, reasonCode: 'anchor_low_confidence' };
+    const collision = findProtectedCollision(anchor.zone, context.protectedRegions, getAnchorAreaRect(anchor));
+    if (collision) return { eligible: false, reasonCode: 'protected_region_collision', blockedBy: collision.kind, blockedLabel: collision.label };
     if (placement.environment === 'preview' && !context.previewMode) return { eligible: false, reasonCode: 'preview_only' };
     if (!matchesPageType(placement, context)) return { eligible: false, reasonCode: 'page_type_mismatch' };
     if (!matchesDeviceTarget(placement, context)) return { eligible: false, reasonCode: 'device_mismatch' };
     return { eligible: true, reasonCode: 'eligible' };
   }
-  function resolvePlacementForAnchor(anchor, placements) {
-    const context = buildEvaluationContext(anchor);
+  function resolvePlacementForAnchor(anchor, placements, protectedRegions) {
+    const context = buildEvaluationContext(anchor, protectedRegions);
     const candidates = placements
       .filter((placement) => placement.anchorType === anchor.anchorType)
       .sort((a, b) => b.priority - a.priority);
     for (const placement of candidates) {
       const evaluation = evaluatePlacement(placement, anchor, context);
       if (evaluation.eligible) {
-        return { render: true, zone: anchor.zone, anchor, context, placement, reasonCode: evaluation.reasonCode };
+        return { render: true, zone: anchor.zone, anchor, context, placement, reasonCode: evaluation.reasonCode, blockedBy: evaluation.blockedBy || null };
       }
     }
+    const evaluatedFirstCandidate = candidates[0] ? evaluatePlacement(candidates[0], anchor, context) : null;
     const firstCandidate = candidates[0] || null;
     return {
       render: false,
@@ -748,7 +968,8 @@
       anchor,
       context,
       placement: firstCandidate,
-      reasonCode: firstCandidate ? evaluatePlacement(firstCandidate, anchor, context).reasonCode : 'no_matching_placement'
+      reasonCode: evaluatedFirstCandidate ? evaluatedFirstCandidate.reasonCode : 'no_matching_placement',
+      blockedBy: evaluatedFirstCandidate ? evaluatedFirstCandidate.blockedBy || null : null
     };
   }
   function emitDecisionEvent(resolution) {
@@ -762,12 +983,15 @@
       pageType: resolution.context.pageType,
       deviceClass: resolution.context.deviceClass,
       previewMode: resolution.context.previewMode,
+      surfaceId: resolution.anchor.surface ? resolution.anchor.surface.surfaceId : null,
+      surfaceCategory: resolution.anchor.surface ? resolution.anchor.surface.category : null,
+      blockedBy: resolution.blockedBy || null,
       timestamp: Date.now()
     };
     window.dispatchEvent(new CustomEvent('ff:ad:decision', { detail }));
     if (!resolution.render) window.dispatchEvent(new CustomEvent('ff:ad:skip', { detail }));
   }
-  function renderPlacementStatus(anchors, resolutions) {
+  function renderPlacementStatus(anchors, resolutions, protectedRegions) {
     const summary = document.getElementById('placementStatusSummary');
     const grid = document.getElementById('placementStatusGrid');
     if (!summary || !grid) return;
@@ -782,6 +1006,7 @@
       <span class="placement-summary-pill">Selected <strong>${state.placementPreset}</strong></span>
       <span class="placement-summary-pill">Environment <strong>${state.previewMode ? 'preview' : 'live'}</strong></span>
       <span class="placement-summary-pill">Mode <strong>${state.editorMode ? 'editor' : 'view'}</strong></span>
+      <span class="placement-summary-pill">Protected Regions <strong>${protectedRegions.length}</strong></span>
     `;
     grid.innerHTML = anchors.map((anchor) => {
       const resolution = resolutions.find((item) => item.anchor.anchorId === anchor.anchorId);
@@ -794,8 +1019,10 @@
           <span class="placement-chip ${resolution && resolution.render ? 'live' : 'skip'}">${resolution && resolution.render ? 'rendering' : 'skipped'}</span>
         </div>
         <p><code>${anchor.anchorType}</code> · confidence ${(anchor.confidence * 100).toFixed(0)}%</p>
+        <p>Surface: <code>${anchor.surface ? anchor.surface.surfaceId : 'unknown'}</code> · ${anchor.surface ? anchor.surface.category : 'unclassified'}</p>
         <p>Placement: <code>${placementId}</code></p>
         <p>${describeReason(resolution ? resolution.reasonCode : 'no_matching_placement')}</p>
+        ${resolution && resolution.blockedBy ? `<p>Blocked by protected region: <code>${resolution.blockedBy}</code></p>` : ''}
         ${issue ? `<p>Editor guard rail: ${issue}</p>` : ''}
       </article>
     `;
@@ -1438,259 +1665,139 @@
      ══════════════════════════════════════════════════════════════ */
   function createSidePanel(resolution) {
     if (!resolution || !resolution.render || isDismissed('side')) return null;
+    const rawArea = getRenderableArea('side');
+    if (!rawArea) return null;
+    const area = clampEditorArea('side', rawArea);
+    const rightInset = Math.max(8, Math.round(window.innerWidth - area.x - area.width));
     const host = document.createElement('div');
     host.id = 'ff-side-host';
-    const area = getRenderableArea('side');
-    const expandedWidth = area ? Math.max(340, area.width) : 340;
-    const hostLeft = area ? area.x + area.width - expandedWidth : window.innerWidth - expandedWidth;
-    host.style.cssText = area
-      ? `position:fixed;top:${area.y}px;left:${hostLeft}px;width:${expandedWidth}px;height:${area.height}px;z-index:2147483647;pointer-events:none;contain:layout style;`
-      : 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;contain:layout style;';
-    document.documentElement.appendChild(host);
-    const shadow = host.attachShadow({ mode: 'closed' });
-    const A = state.accent, G = state.mode === 'glass';
+    host.style.cssText = `position:fixed;top:${Math.round(area.y)}px;right:${rightInset}px;width:${Math.round(area.width)}px;height:${Math.round(area.height)}px;max-width:min(340px, calc(100vw - 16px));max-height:min(460px, calc(100vh - 100px));z-index:9002;pointer-events:none;overflow:hidden;contain:layout paint style;`;
+    document.body.appendChild(host);
+    const shadow = host.attachShadow({ mode: 'open' });
+    const A = state.accent;
+    const G = state.mode === 'glass';
 
     shadow.innerHTML = `
       <style>
         :host { all: initial; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         .panel {
-          position: ${area ? 'absolute' : 'fixed'}; top: ${area ? '0' : '50%'}; right: ${area ? '0' : '-6px'}; left:${area ? 'auto' : 'auto'}; transform: ${area ? 'none' : 'translateY(-50%)'};
-          width: ${area ? `${Math.max(286, area.width)}px` : '82px'}; height: ${area ? `${Math.max(360, area.height)}px` : '440px'};
-          pointer-events: auto; cursor: pointer;
-          transition: width 0.45s cubic-bezier(0.16,1,0.3,1), right 0.45s cubic-bezier(0.16,1,0.3,1);
-          overflow: visible; z-index: 2147483647;
+          position: relative;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          overflow: hidden;
+          border-radius: 24px 0 0 24px;
+          color: #fff;
+          background: ${G
+            ? `linear-gradient(180deg, rgba(15,23,42,0.82) 0%, rgba(30,41,59,0.94) 100%); -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255,255,255,0.12);`
+            : `linear-gradient(180deg, #06060e 0%, ${darken(A,0.3)} 60%, #12081d 100%); border: 1px solid rgba(255,255,255,0.08);`
+          };
+          box-shadow: -16px 18px 44px rgba(15,23,42,0.24);
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 18px 18px 20px;
         }
-        .panel:hover, .panel.expanded { width: ${area ? `${expandedWidth}px` : '340px'}; right: 0; }
-
-        /* Angled shell — diagonal left edge */
-        .shell {
-          position: absolute; inset: 0;
-          ${G
-            ? `background: rgba(255,255,255,0.08); -webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1); backdrop-filter: blur(40px) saturate(180%) brightness(1.1); border-left: 1px solid rgba(255,255,255,0.18); border-top: 1px solid rgba(255,255,255,0.12);`
-            : `background: linear-gradient(178deg, #06060e 0%, ${darken(A,0.25)} 60%, #0a0818 100%);`}
-          clip-path: polygon(22% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 88%);
-          transition: clip-path 0.45s cubic-bezier(0.16,1,0.3,1);
-          box-shadow: -6px 0 40px rgba(0,0,0,0.5);
-        }
-        .panel:hover .shell { clip-path: polygon(6% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 94%); will-change: clip-path; }
-
-        @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-          .shell { background: rgba(10,10,22,0.92) !important; }
-        }
-
-        /* Glass inner glow edge */
-        ${G ? `.shell::after { content:''; position:absolute; inset:0; clip-path:inherit; background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(255,255,255,0.04) 100%); pointer-events:none; }` : ''}
-
-        /* ── Breakout athlete figure — bursts LEFT past panel edge ── */
-        .breakout {
-          position: absolute; top: 12px; left: -55px;
-          width: 200px; height: 260px;
-          z-index: 3;
-          /* Use box-shadow on child instead of filter drop-shadow for GPU perf */
-          transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+        .panel::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.14), transparent 42%);
           pointer-events: none;
         }
-        .panel:hover .breakout { left: -80px; width: 260px; height: 300px; top: 0; }
-
-        /* Athlete silhouette — dynamic action pose */
-        .athlete {
-          width: 100%; height: 100%; position: relative;
+        .content {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          z-index: 1;
         }
-        .athlete .body {
-          position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-          width: 80%; height: 92%;
-          background: linear-gradient(170deg, ${A} 0%, ${darken(A,0.4)} 100%);
-          clip-path: polygon(42% 0%, 58% 0%, 62% 3%, 60% 8%, 55% 8%, 58% 12%, 65% 10%, 72% 14%, 68% 18%, 62% 16%, 58% 20%, 60% 28%, 75% 22%, 88% 18%, 95% 22%, 85% 28%, 70% 32%, 62% 35%, 60% 42%, 58% 55%, 65% 62%, 72% 58%, 78% 65%, 70% 72%, 58% 68%, 55% 75%, 58% 85%, 62% 95%, 55% 100%, 48% 100%, 45% 92%, 42% 82%, 38% 75%, 35% 68%, 28% 72%, 22% 65%, 30% 58%, 38% 62%, 42% 55%, 40% 42%, 38% 35%, 30% 32%, 15% 28%, 5% 22%, 12% 18%, 25% 14%, 38% 16%, 42% 20%, 40% 12%, 45% 8%, 42% 3%);
-          transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
-        }
-        .panel:hover .athlete .body { transform: translateX(-50%) scale(1.06) translateY(-4px); }
-
-        /* Radial glow burst */
-        .athlete::before {
-          content: ''; position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%);
-          width: 160%; height: 160%;
-          background: radial-gradient(ellipse, ${hexRgba(A,0.35)} 0%, ${hexRgba(A,0.1)} 40%, transparent 70%);
-          z-index: -1;
-        }
-        /* Energy streaks */
-        .streak {
-          position: absolute; background: ${hexRgba(A,0.25)}; border-radius: 1px;
-          transform-origin: right center;
-        }
-
-        /* ── Collapsed vertical label ── */
-        .v-label {
-          position: absolute; top: 50%; right: 20px;
-          transform: translateY(-50%) rotate(180deg);
-          writing-mode: vertical-rl;
-          font: 800 15px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-          color: #fff; letter-spacing: 3px; text-transform: uppercase;
-          opacity: 1; transition: opacity 0.3s; z-index: 5;
-        }
-        .panel:hover .v-label { opacity: 0; }
-
-        /* Pulsing indicator dot */
-        .pulse-dot {
-          position: absolute; bottom: 30px; right: 32px;
-          width: 8px; height: 8px; border-radius: 50%;
-          background: ${A}; z-index: 5;
-          animation: dot-pulse 2s ease-in-out infinite;
-        }
-        .panel:hover .pulse-dot { opacity: 0; }
-        @keyframes dot-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.5); } }
-
-        /* ── Expanded content ── */
-        .expanded {
-          position: absolute; bottom: 0; right: 0; width: 100%; height: 100%;
-          display: flex; flex-direction: column; justify-content: flex-end;
-          padding: 16px 16px 20px 30px;
-          opacity: 0; transform: translateX(16px);
-          transition: opacity 0.4s 0.08s, transform 0.4s 0.08s cubic-bezier(0.16,1,0.3,1);
-          z-index: 4;
-        }
-        .panel:hover .expanded { opacity: 1; transform: translateX(0); }
-
-        .ad-tag { font: 600 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
-        .brand { font: 900 11px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 6px; }
-        .headline { font: 900 30px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; color: #fff; text-transform: uppercase; text-shadow: 0 2px 16px rgba(0,0,0,0.6); margin-bottom: 4px; }
-        .headline em { font-style: normal; color: ${A}; display: block; font-size: 38px; }
-        .sub { font: 400 12px/1.4 -apple-system, sans-serif; color: rgba(255,255,255,0.6); margin-bottom: 14px; }
-
-        /* Color swatches */
-        .swatches { display: flex; gap: 6px; margin-bottom: 14px; }
-        .sw { width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid transparent; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
-        .sw:hover { transform: scale(1.25); }
-        .sw.on { border-color: #fff; transform: scale(1.15); }
-
-        /* CTA — arrow-shaped, not rectangular */
+        .eyebrow { font: 700 10px/1 -apple-system, sans-serif; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.56); }
+        .headline { font: 900 26px/0.96 -apple-system, sans-serif; text-transform: uppercase; }
+        .copy { font: 500 12px/1.45 -apple-system, sans-serif; color: rgba(255,255,255,0.74); max-width: 26ch; }
+        .swatches { display: flex; gap: 8px; }
+        .sw { width: 22px; height: 22px; border-radius: 999px; border: 2px solid transparent; cursor: pointer; }
+        .sw.on { border-color: rgba(255,255,255,0.95); }
+        .actions { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .cta {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 11px 24px 11px 16px;
-          background: ${A}; color: #fff;
-          font: 700 12px/1 -apple-system, sans-serif; text-transform: uppercase; letter-spacing: 1.2px;
-          border: none; cursor: pointer;
-          clip-path: polygon(0% 0%, 88% 0%, 100% 50%, 88% 100%, 0% 100%);
-          min-height: 44px; min-width: 44px;
-          transition: transform 0.2s, filter 0.2s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 44px;
+          min-height: 44px;
+          padding: 0 16px;
+          border: none;
+          border-radius: 999px;
+          background: #fff;
+          color: #0f172a;
+          font: 700 12px/44px -apple-system, sans-serif;
+          cursor: pointer;
+          pointer-events: auto;
         }
-        .cta:hover { transform: scale(1.06); filter: brightness(1.15); }
-        .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-
-        .qr-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; opacity: 0.35; transition: opacity 0.35s, transform 0.35s; transform: scale(0.95); }
-        .qr-row:hover { opacity: 1; transform: scale(1); }
-        .qr-row:hover svg { filter: drop-shadow(0 0 8px ${hexRgba(A,0.5)}); }
-        .qr-row svg { color: rgba(255,255,255,0.75); transition: filter 0.3s; }
-        .qr-row .ql { font: 400 9px/1.3 -apple-system, sans-serif; color: rgba(255,255,255,0.45); }
-
-        /* Dismiss */
+        .meta { font: 500 10px/1.35 -apple-system, sans-serif; color: rgba(255,255,255,0.56); text-align: right; }
         .x {
-          position: absolute; top: 10px; right: 10px;
-          width: 28px; height: 28px; border-radius: 50%; border: none;
-          background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.6);
-          font-size: 14px; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          opacity: 0; transition: opacity 0.3s; z-index: 10;
-          min-width: 44px; min-height: 44px;
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          width: 30px;
+          height: 30px;
+          border: none;
+          border-radius: 999px;
+          background: rgba(15,23,42,0.46);
+          color: rgba(255,255,255,0.88);
+          cursor: pointer;
+          pointer-events: auto;
         }
-        .panel:hover .x { opacity: 1; }
-        .x:hover { background: rgba(0,0,0,0.6); color: #fff; }
-        .x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-        @keyframes enterRight { from { transform: translateY(-50%) translateX(100%); opacity: 0; } to { transform: translateY(-50%); opacity: 1; } }
-        .panel { animation: ${area ? 'none' : 'enterRight 0.4s cubic-bezier(0.16,1,0.3,1) both'}; }
-        @media (prefers-reduced-motion: reduce) { .panel { animation: none; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+        .sw { pointer-events: auto; }
+        .cta:focus-visible, .x:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
       </style>
-
       <div class="panel" role="complementary" aria-label="Advertisement">
-        <div class="shell"></div>
-
-        <div class="breakout">
-          <div class="athlete"><div class="body"></div></div>
-          <div class="breakout-img" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:inherit;overflow:hidden;opacity:0.35;mix-blend-mode:screen;"></div>
-        </div>
-
-        <div class="v-label">Explore</div>
-        <div class="pulse-dot"></div>
-
-        <div class="expanded">
-          <div class="ad-tag">Sponsored</div>
-          <div class="brand">Performance Lab</div>
-          <div class="headline">Unleash<br><em>The Power</em></div>
-          <div class="sub">Next-gen performance gear.<br>Built for boundary breakers.</div>
+        <div class="content">
+          <span class="eyebrow">Sponsored</span>
+          <strong class="headline">Unleash<br>The Power</strong>
+          <span class="copy">Right-rail placement resolved from the managed surface policy without changing page markup.</span>
           <div class="swatches">
             <div class="sw on" style="background:${A}" data-c="${A}"></div>
             <div class="sw" style="background:#2563eb" data-c="#2563eb"></div>
             <div class="sw" style="background:#16a34a" data-c="#16a34a"></div>
             <div class="sw" style="background:#f5f5f5" data-c="#f5f5f5"></div>
           </div>
-          <button class="cta" tabindex="0">Shop Now &#9654;</button>
-          <div class="qr-row">
-            <div>${generateQR('https://brand.co/side', 58)}</div>
-            <div class="ql">Scan to<br>shop mobile</div>
+          <div class="actions">
+            <button class="cta" tabindex="0">Explore</button>
+            <div class="meta">Managed side rail<br>Shadow DOM isolated</div>
           </div>
         </div>
-
         <button class="x" aria-label="Dismiss advertisement" tabindex="0">&times;</button>
       </div>`;
 
-    // Energy streaks
-    // Apply uploaded image layers or fallback to default optimized image
-    if (state.optimizedLayers) {
-      applyLayersToBanner(shadow, 'side');
-    } else {
-      var sideBreakoutImg = shadow.querySelector('.breakout-img');
-      if (sideBreakoutImg) {
-        var athleteImg = createOptimizedImage('athlete-hero', 'zPYFHQYGp4eCapgYx3Rqd0mPlvJY', 'Athlete breakout', '', 400, 533);
-        sideBreakoutImg.appendChild(athleteImg);
-      }
-    }
-
-    const ath = shadow.querySelector('.athlete');
-    for (let i = 0; i < 8; i++) {
-      const s = document.createElement('div');
-      s.className = 'streak';
-      s.style.cssText = 'top:' + (10+Math.random()*75) + '%;left:' + (-30-Math.random()*50) + '%;width:' + (15+Math.random()*35) + '%;height:' + (1+Math.random()*2.5) + 'px;opacity:' + (0.1+Math.random()*0.3) + ';';
-      ath.appendChild(s);
-    }
-
-    // Swatch interactivity
     const sws = shadow.querySelectorAll('.sw');
-    const body = shadow.querySelector('.body');
-    sws.forEach(s => s.addEventListener('click', () => {
-      sws.forEach(x => x.classList.remove('on'));
+    const panel = shadow.querySelector('.panel');
+    sws.forEach((s) => s.addEventListener('click', () => {
+      sws.forEach((x) => x.classList.remove('on'));
       s.classList.add('on');
       const c = s.dataset.c;
-      body.style.background = 'linear-gradient(170deg, ' + c + ' 0%, ' + darken(c,0.4) + ' 100%)';
+      panel.style.background = G
+        ? `linear-gradient(180deg, rgba(15,23,42,0.82) 0%, rgba(30,41,59,0.94) 100%)`
+        : `linear-gradient(180deg, #06060e 0%, ${darken(c,0.3)} 60%, #12081d 100%)`;
       logEvent('ff:ad:interaction', { zone: 'side', action: 'swatch', color: c });
     }));
 
-    // Parallax — rAF throttled for GPU perf
-    const panel = shadow.querySelector('.panel');
-    const bo = shadow.querySelector('.breakout');
-    let sideRaf = 0;
-    panel.addEventListener('mousemove', e => {
-      if (sideRaf) return;
-      sideRaf = requestAnimationFrame(() => {
-        const r = panel.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-        bo.style.transform = 'translate(' + (x*-18) + 'px,' + (y*-12) + 'px)';
-        sideRaf = 0;
-      });
-    });
-    panel.addEventListener('mouseleave', () => { cancelAnimationFrame(sideRaf); sideRaf = 0; bo.style.transform = ''; });
-
     shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'side', preset: state.preset, mode: state.mode }));
     shadow.querySelector('.x').addEventListener('click', () => {
-      panel.style.transform = area ? 'translateX(120%)' : 'translateY(-50%) translateX(120%)'; panel.style.opacity = '0';
-      setTimeout(() => host.remove(), 400);
-      setDismissed('side'); logEvent('ff:ad:dismiss', { zone: 'side' });
+      panel.style.transform = 'translateX(120%)';
+      panel.style.opacity = '0';
+      setTimeout(() => host.remove(), 220);
+      setDismissed('side');
+      logEvent('ff:ad:dismiss', { zone: 'side' });
     });
-    panel.addEventListener('keydown', e => { if (e.key === 'Escape') shadow.querySelector('.x').click(); });
+    panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') shadow.querySelector('.x').click(); });
 
     logEvent('ff:ad:loaded', { zone: 'side' });
-    setTimeout(() => logEvent('ff:ad:impression', { zone: 'side' }), 800);
+    setTimeout(() => logEvent('ff:ad:impression', { zone: 'side' }), 400);
     return host;
   }
 
@@ -1699,251 +1806,130 @@
      ══════════════════════════════════════════════════════════════ */
   function createFooterBanner(resolution) {
     if (!resolution || !resolution.render || isDismissed('footer')) return null;
+    const rawArea = getRenderableArea('footer');
+    if (!rawArea) return null;
+    const area = clampEditorArea('footer', rawArea);
+    const bottomInset = Math.max(8, Math.round(window.innerHeight - area.y - area.height));
     const host = document.createElement('div');
     host.id = 'ff-footer-host';
-    const area = getRenderableArea('footer');
-    host.style.cssText = area
-      ? `position:fixed;top:${area.y}px;left:${area.x}px;width:${area.width}px;height:${area.height}px;z-index:2147483646;pointer-events:none;contain:layout style;`
-      : 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;contain:layout style;';
-    document.documentElement.appendChild(host);
-    const shadow = host.attachShadow({ mode: 'closed' });
-    const A = state.accent, G = state.mode === 'glass', P = state.preset;
-
-    // Shape clip-paths per preset
-    const clips = {
-      capsule:   { d: 'polygon(1% 15%, 3% 0%, 97% 0%, 99% 15%, 100% 100%, 0% 100%)', m: 'polygon(0% 8%, 100% 0%, 100% 100%, 0% 100%)' },
-      angled:    { d: 'polygon(0% 35%, 4% 0%, 62% 0%, 66% 22%, 100% 22%, 100% 100%, 0% 100%)', m: 'polygon(0% 18%, 3% 0%, 100% 0%, 100% 100%, 0% 100%)' },
-      signature: { d: 'polygon(0% 42%, 6% 18%, 14% 38%, 22% 12%, 32% 28%, 42% 6%, 52% 22%, 62% 4%, 72% 20%, 82% 8%, 92% 26%, 96% 12%, 100% 28%, 100% 100%, 0% 100%)', m: 'polygon(0% 28%, 12% 14%, 28% 24%, 44% 8%, 58% 18%, 74% 6%, 88% 16%, 100% 20%, 100% 100%, 0% 100%)' }
-    };
-    const clip = clips[P];
-    const bg = G ? 'rgba(255,255,255,0.08)' : 'linear-gradient(95deg, #06060e 0%, ' + darken(A,0.22) + ' 45%, #0a0818 100%)';
+    host.style.cssText = `position:fixed;bottom:${bottomInset}px;left:${Math.round(area.x)}px;width:${Math.round(area.width)}px;height:${Math.round(area.height)}px;max-width:calc(100vw - 24px);max-height:170px;z-index:9001;pointer-events:none;overflow:hidden;contain:layout paint style;`;
+    document.body.appendChild(host);
+    const shadow = host.attachShadow({ mode: 'open' });
+    const A = state.accent;
+    const G = state.mode === 'glass';
+    const cornerRadius = state.preset === 'angled' ? '18px 26px 0 0' : state.preset === 'signature' ? '26px 26px 0 0' : '24px 24px 0 0';
 
     shadow.innerHTML = `
       <style>
         :host { all: initial; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         .banner {
-          position: ${area ? 'absolute' : 'fixed'}; bottom: ${area ? 'auto' : '0'}; top:${area ? '0' : 'auto'}; left: 0; right: ${area ? 'auto' : '0'};
-          width:${area ? `${area.width}px` : 'auto'}; height: ${area ? `${Math.max(132, area.height)}px` : '150px'};
-          pointer-events: auto; overflow: visible;
-          z-index: 2147483646;
+          position: relative;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          overflow: hidden;
+          border-radius: ${cornerRadius};
+          color: #fff;
+          background: ${G
+            ? `linear-gradient(95deg, rgba(15,23,42,0.84) 0%, rgba(30,41,59,0.94) 100%); -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255,255,255,0.12);`
+            : `linear-gradient(95deg, #06060e 0%, ${darken(A,0.22)} 45%, #0a0818 100%); border: 1px solid rgba(255,255,255,0.08);`
+          };
+          box-shadow: 0 -8px 36px rgba(15,23,42,0.22);
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 14px;
+          align-items: center;
+          padding: 18px 64px 18px 22px;
         }
-
-        .shell {
-          position: absolute; inset: 0;
-          background: ${bg};
-          ${G ? '-webkit-backdrop-filter: blur(40px) saturate(180%) brightness(1.1); backdrop-filter: blur(40px) saturate(180%) brightness(1.1); border-top: 1px solid rgba(255,255,255,0.18);' : ''}
-          clip-path: ${clip.d};
-          box-shadow: 0 -4px 40px rgba(0,0,0,0.45);
-          transition: clip-path 0.4s cubic-bezier(0.16,1,0.3,1);
+        .banner::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(115deg, rgba(255,255,255,0.12), transparent 42%);
+          pointer-events: none;
         }
-        @supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-          .shell { background: rgba(10,10,22,0.92) !important; }
-        }
-
-        /* Glass inner highlight */
-        ${G ? `.shell::after { content:''; position:absolute; inset:0; clip-path:inherit; background: linear-gradient(175deg, rgba(255,255,255,0.14) 0%, transparent 35%, rgba(255,255,255,0.03) 100%); pointer-events:none; }` : ''}
-
-        /* ── Breakout product — extends ABOVE the banner ── */
-        .breakout {
-          position: absolute; bottom: 16px; left: 48px;
-          width: 210px; height: 220px;
-          z-index: 5;
-          box-shadow: 0 -10px 30px rgba(0,0,0,0.45);
-          transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
-          cursor: pointer;
-        }
-        .breakout:hover { transform: translateY(-14px) scale(1.08) rotate(-3deg); }
-
-        /* Product — sneaker CSS art */
-        .product { width: 100%; height: 100%; position: relative; }
-        .shoe {
-          position: absolute; bottom: 8%; left: 5%; width: 90%; height: 52%;
-          background: linear-gradient(140deg, ${A}, ${darken(A,0.5)});
-          clip-path: polygon(5% 48%, 0% 78%, 12% 100%, 88% 100%, 100% 82%, 100% 42%, 88% 28%, 72% 18%, 52% 20%, 38% 12%, 22% 18%, 8% 32%);
-        }
-        .sole {
-          position: absolute; bottom: 6%; left: 10%; width: 78%; height: 12%;
-          background: #fff; opacity: 0.92;
-          clip-path: polygon(2% 0%, 98% 0%, 94% 100%, 6% 100%);
-        }
-        .swoosh {
-          position: absolute; bottom: 30%; left: 22%; width: 52%; height: 18%;
-          background: rgba(255,255,255,0.88);
-          clip-path: polygon(0% 100%, 100% 0%, 82% 0%, 0% 65%);
-        }
-        .midsole {
-          position: absolute; bottom: 14%; left: 14%; width: 68%; height: 8%;
-          background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-          border-radius: 4px;
-        }
-        /* Radial glow behind product */
-        .product::after {
-          content: ''; position: absolute; top: 45%; left: 50%;
-          transform: translate(-50%,-50%); width: 150%; height: 150%;
-          background: radial-gradient(ellipse, ${hexRgba(A,0.35)} 0%, transparent 60%);
-          z-index: -1;
-          /* Static glow — no infinite animation for GPU savings */
-        }
-
-        /* ── Content ── */
         .content {
-          position: absolute; bottom: 0; left: 280px; right: 0; height: 100%;
-          display: flex; align-items: center; gap: 28px;
-          padding: 0 24px; padding-bottom: env(safe-area-inset-bottom, 0px);
-          z-index: 4;
+          position: relative;
+          z-index: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
         }
-
-        .text { flex: 1; min-width: 0; }
-        .ad-tag { font: 600 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-        .brand-sm { font: 700 10px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
-        .hl { font: 900 28px/1.0 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; color: #fff; text-transform: uppercase; text-shadow: 0 2px 20px rgba(0,0,0,0.6); }
-        .hl em { font-style: normal; color: ${A}; display: block; font-size: 38px; }
-        .sub { font: 400 11px/1.4 -apple-system, sans-serif; color: rgba(255,255,255,0.55); margin-top: 3px; }
-
-        /* Hover-to-reveal chips */
-        .chips { display: flex; gap: 6px; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.3s, opacity 0.3s, margin 0.3s; margin-top: 0; }
-        .banner:hover .chips { max-height: 36px; opacity: 1; margin-top: 6px; }
-        .chip {
-          font: 500 9px/1 -apple-system, sans-serif; padding: 4px 10px;
-          border: 1px solid rgba(255,255,255,0.18); border-radius: 14px;
-          color: rgba(255,255,255,0.65); white-space: nowrap; cursor: pointer;
-          transition: all 0.15s;
-        }
-        .chip:hover { background: ${hexRgba(A,0.2)}; border-color: ${A}; color: #fff; }
-
-        /* CTA — angular, not rectangular */
+        .ad-tag { font: 700 9px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.62); text-transform: uppercase; letter-spacing: 0.12em; }
+        .brand-sm { font: 700 10px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.18em; }
+        .hl { font: 900 24px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; text-transform: uppercase; }
+        .hl em { font-style: normal; color: ${A}; }
+        .sub { font: 500 11px/1.45 -apple-system, sans-serif; color: rgba(255,255,255,0.72); max-width: 44ch; }
+        .actions { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
         .cta {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 13px 30px 13px 18px;
-          background: ${A}; color: #fff;
-          font: 700 13px/1 -apple-system, sans-serif; text-transform: uppercase; letter-spacing: 1.2px;
-          border: none; cursor: pointer;
-          clip-path: polygon(0% 0%, 88% 0%, 100% 50%, 88% 100%, 0% 100%, 8% 50%);
-          min-height: 44px; min-width: 44px; flex-shrink: 0;
-          transition: transform 0.2s, filter 0.2s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 44px;
+          min-height: 44px;
+          padding: 0 18px;
+          border: none;
+          border-radius: 999px;
+          background: #fff;
+          color: #0f172a;
+          font: 700 12px/44px -apple-system, sans-serif;
+          cursor: pointer;
+          pointer-events: auto;
         }
-        .cta:hover { transform: scale(1.06); filter: brightness(1.15); }
-        .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-
-        .qr { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; opacity: 0.3; transition: opacity 0.35s, transform 0.35s; transform: scale(0.92); }
-        .qr:hover { opacity: 1; transform: scale(1); }
-        .qr:hover svg { filter: drop-shadow(0 0 10px ${hexRgba(A,0.5)}); }
-        .qr svg { color: rgba(255,255,255,0.75); transition: filter 0.3s; }
-        .qr span { font: 500 8px/1 -apple-system, sans-serif; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; }
-
+        .meta { font: 500 10px/1.35 -apple-system, sans-serif; color: rgba(255,255,255,0.56); text-align: right; }
         .dismiss {
-          position: absolute; top: 6px; right: 16px;
-          width: 28px; height: 28px; border-radius: 50%; border: none;
-          background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.5);
-          font-size: 14px; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          z-index: 10; min-width: 44px; min-height: 44px;
-          opacity: 0; transition: opacity 0.2s;
+          position: absolute;
+          top: 8px;
+          right: 12px;
+          width: 30px;
+          height: 30px;
+          border: none;
+          border-radius: 999px;
+          background: rgba(15,23,42,0.44);
+          color: rgba(255,255,255,0.88);
+          cursor: pointer;
+          pointer-events: auto;
         }
-        .banner:hover .dismiss { opacity: 1; }
-        .dismiss:hover { background: rgba(0,0,0,0.5); color: #fff; }
-        .dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .banner { animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
-
+        .cta:focus-visible, .dismiss:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
         @media (max-width: 767px) {
-          .banner { height: 125px; }
-          .shell { clip-path: ${clip.m}; }
-          .breakout { left: 10px; width: 120px; height: 140px; bottom: 8px; }
-          .content { left: 140px; gap: 12px; padding: 0 12px; }
-          .hl { font-size: 20px; }
-          .hl em { font-size: 26px; }
-          .cta { padding: 10px 20px 10px 14px; font-size: 11px; }
-          .qr { display: none; }
+          .banner { grid-template-columns: 1fr; padding: 16px 52px 16px 16px; }
+          .hl { font-size: 18px; }
+          .sub { font-size: 10px; }
+          .actions { justify-content: space-between; }
+          .meta { text-align: left; }
         }
-        @media (max-height: 499px) and (orientation: landscape) {
-          .banner { height: 52px; }
-          .breakout { display: none; }
-          .content { left: 20px; }
-          .chips { display: none; }
-          .sub { display: none; }
-          .hl { font-size: 16px; }
-          .hl em { font-size: 18px; display: inline; }
-        }
-        @media (prefers-reduced-motion: reduce) { .banner { animation: none; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
       </style>
-
       <div class="banner" role="complementary" aria-label="Advertisement">
-        <div class="shell"></div>
-
-        <div class="breakout">
-          <div class="breakout-img" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:inherit;overflow:hidden;opacity:0.3;mix-blend-mode:screen;"></div>
-          <div class="product">
-            <div class="shoe"></div>
-            <div class="sole"></div>
-            <div class="midsole"></div>
-            <div class="swoosh"></div>
-          </div>
-        </div>
-
         <div class="content">
-          <div class="text">
-            <div class="ad-tag">Sponsored</div>
-            <div class="brand-sm">Performance Lab</div>
-            <div class="hl">Break<br><em>Every Limit</em></div>
-            <div class="sub">Performance engineered. Style redefined.</div>
-            <div class="chips">
-              <span class="chip">Lightweight</span>
-              <span class="chip">Responsive Foam</span>
-              <span class="chip">All-Terrain</span>
-            </div>
-          </div>
-          <button class="cta" tabindex="0">Shop Now &#9654;</button>
-          <div class="qr">
-            ${generateQR('https://brand.co/footer', 64)}
-            <span>Scan</span>
-          </div>
+          <div class="ad-tag">Sponsored</div>
+          <div class="brand-sm">Performance Lab</div>
+          <div class="hl">Break <em>Every Limit</em></div>
+          <div class="sub">Footer-safe placement resolved by the managed runtime without requiring any page markup edits from the creator.</div>
         </div>
-
+        <div class="actions">
+          <button class="cta" tabindex="0">Shop Now</button>
+          <div class="meta">Managed footer zone<br>Shadow DOM isolated</div>
+        </div>
         <button class="dismiss" aria-label="Dismiss advertisement" tabindex="0">&times;</button>
       </div>`;
 
-    // Parallax on product — rAF throttled
     const banner = shadow.querySelector('.banner');
-    // Apply uploaded image layers or fallback to default optimized image
-    if (state.optimizedLayers) {
-      applyLayersToBanner(shadow, 'footer');
-    } else {
-      var footBreakoutImg = shadow.querySelector('.breakout-img');
-      if (footBreakoutImg) {
-        var productImg = createOptimizedImage('product-hero', 'iigKHYY2d4d2eIiAe5h3iieHgHIH', 'Product breakout', '', 400, 267);
-        footBreakoutImg.appendChild(productImg);
-      }
-    }
-
-    const bk = shadow.querySelector('.breakout');
-    let footRaf = 0;
-    banner.addEventListener('mousemove', e => {
-      if (footRaf) return;
-      footRaf = requestAnimationFrame(() => {
-        const r = banner.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
-        bk.style.transform = 'translate(' + (x*-22) + 'px,' + (y*-14) + 'px)';
-        footRaf = 0;
-      });
-    });
-    banner.addEventListener('mouseleave', () => { cancelAnimationFrame(footRaf); footRaf = 0; bk.style.transform = ''; });
-
-    shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'footer', preset: P, mode: state.mode }));
-    shadow.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => logEvent('ff:ad:interaction', { zone: 'footer', chip: c.textContent })));
-
+    shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'footer', preset: state.preset, mode: state.mode }));
     shadow.querySelector('.dismiss').addEventListener('click', () => {
-      banner.style.transform = 'translateY(110%)'; banner.style.opacity = '0';
-      setTimeout(() => host.remove(), 400);
-      setDismissed('footer'); logEvent('ff:ad:dismiss', { zone: 'footer' });
+      banner.style.transform = 'translateY(110%)';
+      banner.style.opacity = '0';
+      setTimeout(() => host.remove(), 220);
+      setDismissed('footer');
+      logEvent('ff:ad:dismiss', { zone: 'footer' });
     });
-    banner.addEventListener('keydown', e => { if (e.key === 'Escape') shadow.querySelector('.dismiss').click(); });
+    banner.addEventListener('keydown', (e) => { if (e.key === 'Escape') shadow.querySelector('.dismiss').click(); });
 
     logEvent('ff:ad:loaded', { zone: 'footer' });
-    setTimeout(() => logEvent('ff:ad:impression', { zone: 'footer' }), 800);
+    setTimeout(() => logEvent('ff:ad:impression', { zone: 'footer' }), 400);
     return host;
   }
 
@@ -1956,9 +1942,12 @@
     host.id = 'ff-inline-host';
     const area = getRenderableArea('inline');
     const articleBounds = getArticleBounds();
+    const targetRect = resolution.anchor.node.getBoundingClientRect();
     const inlineWidth = area ? Math.min(articleBounds.width, area.width) : articleBounds.width;
     const inlineOffset = area ? Math.max(0, area.x - articleBounds.left) : 0;
-    host.style.cssText = `margin: 24px 0; width:${inlineWidth}px; max-width:100%; transform:translateX(${inlineOffset}px);`;
+    const inlineHeight = area ? Math.max(132, area.height) : 168;
+    const inlineMargin = area ? Math.max(24, Math.round(area.y - targetRect.top)) : 112;
+    host.style.cssText = `margin:${inlineMargin}px 0 24px; width:${inlineWidth}px; max-width:100%; transform:translateX(${inlineOffset}px);`;
 
     const shadow = host.attachShadow({ mode: 'open' });
     const accent = state.accent;
@@ -1971,6 +1960,7 @@
           position: relative;
           overflow: hidden;
           border-radius: 18px;
+          min-height: ${inlineHeight}px;
           padding: 16px 18px;
           color: #fff;
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
@@ -2103,19 +2093,25 @@
   /* ══ RENDER ══ */
   function render() {
     rebuildQueued = false;
+    document.body.classList.toggle('is-editor-mode', state.editorMode);
+    document.body.classList.toggle('is-preview-mode', state.previewMode);
     updateInstallPanel();
     document.getElementById('ff-side-host')?.remove();
     document.getElementById('ff-footer-host')?.remove();
     document.getElementById('ff-inline-host')?.remove();
     clearEditorLayer();
     clearPreviewAnchors();
+    if (!state.editorMode) {
+      document.querySelectorAll('.editor-area, .editor-note, .editor-head, .editor-media, .editor-tint, .editor-handle').forEach((node) => node.remove());
+    }
     ensureEditorAreas();
     const anchors = detectAnchors();
     const placements = getPlacementLibrary();
-    const resolutions = anchors.map((anchor) => resolvePlacementForAnchor(anchor, placements));
+    const protectedRegions = collectProtectedRegions();
+    const resolutions = anchors.map((anchor) => resolvePlacementForAnchor(anchor, placements, protectedRegions));
     validateEditorAreas();
     resolutions.forEach(emitDecisionEvent);
-    renderPlacementStatus(anchors, resolutions);
+    renderPlacementStatus(anchors, resolutions, protectedRegions);
     renderPreviewAnchors(anchors, resolutions);
     renderEditorLayer();
 
@@ -2172,22 +2168,48 @@
     const siteId = getPublishSiteId();
     const payload = buildPublishedConfig(siteId);
     try {
-      const serialized = JSON.stringify(payload);
-      if (window.location.protocol.startsWith('http')) {
-        const response = await fetch(`/api/publish/${encodeURIComponent(siteId)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: serialized
-        });
-        if (!response.ok) throw new Error(`Publish endpoint failed: ${response.status}`);
-        localStorage.setItem(getPublishedConfigKey(siteId), serialized);
-      } else {
-        localStorage.setItem(getPublishedConfigKey(siteId), serialized);
-      }
-      updateInstallPanel();
+      await publishRuntimeConfig(siteId, payload);
       logEvent('ff:ad:publish', { zone: 'workspace', siteId, placementPreset: state.placementPreset });
     } catch {
       window.alert('Publishing failed. When served through the verification server this writes to the local published-config endpoint; otherwise it falls back to browser storage only.');
+    }
+  });
+  document.getElementById('rollbackConfig').addEventListener('click', async () => {
+    const siteId = getPublishSiteId();
+    try {
+      const payload = await loadRollbackPayload(siteId);
+      if (!payload) {
+        window.alert('No rollback snapshot is available for this site yet.');
+        return;
+      }
+      payload.publishedAt = new Date().toISOString();
+      await publishRuntimeConfig(siteId, payload);
+      logEvent('ff:ad:rollback', { zone: 'workspace', siteId });
+    } catch {
+      window.alert('Rollback failed. Verify the published backup is available and the local verification endpoint is running.');
+    }
+  });
+  document.getElementById('killSwitchToggle').addEventListener('click', async () => {
+    const siteId = getPublishSiteId();
+    const current = getPublishedConfig(siteId) || buildPublishedConfig(siteId);
+    const nextKillSwitchState = !(current.runtime && current.runtime.killSwitch);
+    const payload = {
+      ...current,
+      siteId,
+      publishedAt: new Date().toISOString(),
+      runtime: {
+        ...(current.runtime || {}),
+        killSwitch: nextKillSwitchState,
+        liveEnabled: !nextKillSwitchState,
+        failClosed: true,
+        isolationMode: 'shadow-dom'
+      }
+    };
+    try {
+      await publishRuntimeConfig(siteId, payload);
+      logEvent('ff:ad:kill-switch', { zone: 'workspace', siteId, active: nextKillSwitchState });
+    } catch {
+      window.alert('Updating the live emergency stop failed. Verify the local publish endpoint is available.');
     }
   });
   document.getElementById('resetDismiss').addEventListener('click', () => {

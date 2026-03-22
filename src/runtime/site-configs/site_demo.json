@@ -7,7 +7,11 @@
     "accent": "#ff3b30",
     "visualMode": "solid",
     "shapePreset": "capsule",
-    "confidenceFloor": 0.7
+    "confidenceFloor": 0.7,
+    "killSwitch": false,
+    "liveEnabled": true,
+    "failClosed": true,
+    "isolationMode": "shadow-dom"
   },
   "placements": [
     {
@@ -55,6 +59,72 @@
       "height": 168,
       "columnOffset": 0,
       "anchorOffset": 112
+    }
+  },
+  "policy": {
+    "schemaVersion": 1,
+    "collisionPadding": {
+      "footer": 18,
+      "side": 14,
+      "inline": 8
+    },
+    "surfaces": [
+      {
+        "surfaceId": "footer-sticky-zone",
+        "label": "Footer safe zone",
+        "region": "footer",
+        "category": "allowed",
+        "anchorType": "footer",
+        "behavior": "sticky-edge"
+      },
+      {
+        "surfaceId": "right-rail-zone",
+        "label": "Right rail safe zone",
+        "region": "rail",
+        "category": "allowed",
+        "anchorType": "floating-right",
+        "behavior": "desktop-edge"
+      },
+      {
+        "surfaceId": "inline-article-zone",
+        "label": "Inline article safe zone",
+        "region": "content",
+        "category": "allowed",
+        "anchorType": "inline-article",
+        "behavior": "in-flow"
+      }
+    ],
+    "protectedRegions": [
+      {
+        "kind": "navigation",
+        "label": "navigation or header",
+        "selectors": ["header", "nav", "[role=\"navigation\"]"]
+      },
+      {
+        "kind": "form",
+        "label": "form or input surface",
+        "selectors": ["form", "[role=\"form\"]", "input", "textarea", "select"]
+      },
+      {
+        "kind": "consent",
+        "label": "cookie or consent manager",
+        "selectors": ["[id*=\"cookie\"]", "[class*=\"cookie\"]", "[id*=\"consent\"]", "[class*=\"consent\"]"]
+      },
+      {
+        "kind": "chat",
+        "label": "chat launcher or support widget",
+        "selectors": ["[id*=\"chat\"]", "[class*=\"chat\"]", "[id*=\"intercom\"]", "[class*=\"intercom\"]"]
+      },
+      {
+        "kind": "dialog",
+        "label": "modal or dialog",
+        "selectors": ["dialog[open]", "[role=\"dialog\"]", "[aria-modal=\"true\"]"]
+      }
+    ],
+    "constraints": {
+      "failClosed": true,
+      "noSelectorEditing": true,
+      "noProtectedRegionRendering": true
     }
   },
   "installSnippet": "<script>window.FF_AD_SITE = \"site_demo\";</script>\n<script async src=\"/runtime/ad-placement-loader.js\" data-config=\"/api/published/site_demo.json\"></script>"
