@@ -71,6 +71,14 @@ export function initScanner({ shadow, shell }) {
 
       renderOverlays(mapResult, refs);
 
+      // Notify slot panel of scan data for safety assessment
+      shadow.dispatchEvent(new CustomEvent('ff:scan:complete', {
+        detail: {
+          mapResult,
+          alternatives: mapResult.opportunities || [],
+        },
+      }));
+
       const summary = mapResult.summary || {};
       statusText.textContent = `Found ${summary.totalSlots || 0} slots — `
         + `${summary.highConfidence || 0} safe, `

@@ -4,13 +4,19 @@
  * When a slot overlay is clicked, this panel opens in the config panel showing:
  * - Region, confidence score, device applicability
  * - Risks and any conflicts with exact collision geometry
+ * - Safety assessment (F8+F9) with injection confirmation
  * - Multi-selection tracking for publish
  */
+
+import { createSafetyPanel } from './ff-builder-safety.js';
 
 /**
  * @param {{ shadow: ShadowRoot, shell: HTMLElement, store: object }} ctx
  */
 export function initSlotPanel({ shadow, shell, store }) {
+  let _mapResult = null;
+  let _collisionPadding = { footer: 18, side: 14, inline: 8 };
+  let _alternatives = [];
   const configPanel = shell._ff.configPanel;
   const selectedSlots = new Map(); // slotId → slot
   let activeSlot = null;
@@ -38,7 +44,7 @@ export function initSlotPanel({ shadow, shell, store }) {
       selectedSlots.set(slot.slotId, slot);
     }
 
-    renderSlotDetails(slotSection, slot, selectedSlots);
+    renderSlotDetails(slotSection, slot, selectedSlots, _mapResult, _collisionPadding, _alternatives);
     slotSection.style.display = '';
 
     shadow.dispatchEvent(new CustomEvent('ff:slot:active', {
@@ -59,7 +65,7 @@ export function initSlotPanel({ shadow, shell, store }) {
       if (selectedSlots.size === 0) {
         slotSection.style.display = 'none';
       } else {
-        renderSlotDetails(slotSection, activeSlot || [...selectedSlots.values()][0], selectedSlots);
+        renderSlotDetails(slotSection, activeSlot || [...selectedSlots.values()][0], selectedSlots, _mapResult, _collisionPadding, _alternatives);
       }
       shadow.dispatchEvent(new CustomEvent('ff:slots:changed', {
         detail: { selectedSlots: [...selectedSlots.values()] },
@@ -74,15 +80,35 @@ export function initSlotPanel({ shadow, shell, store }) {
     }
   });
 
+  // ── Apply Fix from safety recommendations ─────────────
+  slotSection.addEventListener('click', (e) => {
+    const applyBtn = e.target.closest('.ff-rec-apply');
+    if (!applyBtn) return;
+    try {
+      const action = JSON.parse(applyBtn.dataset.action);
+      shadow.dispatchEvent(new CustomEvent('ff:fix:apply', {
+        detail: { slotId: activeSlot?.slotId, action },
+      }));
+    } catch { /* malformed action data */ }
+  });
+
+  // ── Scanner data update ───────────────────────────────
+  shadow.addEventListener('ff:scan:complete', (e) => {
+    if (e.detail?.mapResult) _mapResult = e.detail.mapResult;
+    if (e.detail?.alternatives) _alternatives = e.detail.alternatives;
+  });
+
   return {
     getSelectedSlots: () => [...selectedSlots.values()],
     getActiveSlot: () => activeSlot,
+    setMapResult: (mapResult) => { _mapResult = mapResult; },
+    setAlternatives: (alts) => { _alternatives = alts; },
   };
 }
 
 // ── Render ─────────────────────────────────────────────────────
 
-function renderSlotDetails(container, slot, selectedSlots) {
+function renderSlotDetails(container, slot, selectedSlots, mapResult, collisionPadding, alternatives) {
   // Keep the style element
   const styleEl = container.querySelector('style');
   container.innerHTML = '';
@@ -171,6 +197,17 @@ function renderSlotDetails(container, slot, selectedSlots) {
       list.appendChild(row);
     }
     container.appendChild(list);
+  }
+
+  // ── Safety Assessment (F8+F9) ─────────────────────────
+  if (mapResult) {
+    const safetyPanel = createSafetyPanel({
+      slot,
+      mapResult,
+      collisionPadding: collisionPadding || { footer: 18, side: 14, inline: 8 },
+      alternatives: alternatives || [],
+    });
+    container.appendChild(safetyPanel);
   }
 }
 
