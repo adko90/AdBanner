@@ -75,7 +75,7 @@
       document.getElementById('hostNote').textContent = `Builder overlay active for site "${siteId}". Configure your banner visually, then click Publish.`;
       const s = document.createElement('script');
       s.type = 'module';
-      s.src = '/runtime/ff-builder.js';
+      s.src = '/runtime/ff-builder-app.js';
       s.dataset.mode = 'editor';
       s.dataset.site = siteId;
       document.body.appendChild(s);
