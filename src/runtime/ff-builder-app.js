@@ -12,6 +12,8 @@
 import { createBuilderState, getPublishedConfig } from './ff-builder-state.js';
 import { createShell } from './ff-builder-shell.js';
 import { initScanner } from './ff-builder-scanner.js';
+import { initSlotPanel } from './ff-builder-slot-panel.js';
+import { initPreview } from './ff-builder-preview.js';
 import {
   resolveConfig,
   renderFooterBanner,
@@ -51,6 +53,19 @@ function launchEditor(siteId) {
 
   // Initialize scanner (F3)
   initScanner({ shadow, shell });
+
+  // Initialize slot panel (F4)
+  const slotPanel = initSlotPanel({ shadow, shell, store });
+
+  // Initialize live preview (F7)
+  initPreview({ shadow, shell, store });
+
+  // Wire slots:query for preview-all
+  shadow.addEventListener('ff:slots:query', (e) => {
+    if (e.detail?.callback) {
+      e.detail.callback(slotPanel.getSelectedSlots());
+    }
+  });
 
   // Ctrl+Shift+B toggle
   document.addEventListener('keydown', (e) => {
