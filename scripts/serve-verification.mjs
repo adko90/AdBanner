@@ -2,7 +2,7 @@ import http from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..', 'src');
@@ -10,13 +10,15 @@ const publishedRoot = path.resolve(__dirname, '..', '.verification-data');
 const port = Number(process.env.PORT || 4173);
 const mapperScript = await readFile(path.resolve(root, 'runtime', 'site-mapper.js'), 'utf8');
 
-// Lazy-init Playwright browser (shared across requests)
-let _browser = null;
-async function getBrowser() {
-  if (!_browser) {
-    _browser = await chromium.launch({ headless: true });
+// Lazy-init Playwright browsers (shared across requests)
+const _browsers = { chromium: null, webkit: null };
+async function getBrowser(engine = 'chromium') {
+  const key = engine === 'webkit' ? 'webkit' : 'chromium';
+  if (!_browsers[key]) {
+    const launcher = key === 'webkit' ? webkit : chromium;
+    _browsers[key] = await launcher.launch({ headless: true });
   }
-  return _browser;
+  return _browsers[key];
 }
 
 async function mapSiteHandler(req, res) {
@@ -40,18 +42,20 @@ async function mapSiteHandler(req, res) {
   const viewportWidth = payload.viewportWidth || 1440;
   const viewportHeight = payload.viewportHeight || 900;
   const device = payload.device; // 'mobile' | 'tablet' | 'desktop' | undefined
+  const browserEngine = payload.browser || 'chromium'; // 'chromium' | 'webkit'
+  const multiBreakpoint = payload.multiBreakpoint === true;
 
-  const viewports = {
+  const VIEWPORTS = {
     mobile:  { width: 390,  height: 844 },
     tablet:  { width: 820,  height: 1180 },
     desktop: { width: viewportWidth, height: viewportHeight },
   };
-  const vp = viewports[device] || { width: viewportWidth, height: viewportHeight };
+  const vp = VIEWPORTS[device] || { width: viewportWidth, height: viewportHeight };
 
   let browser;
   let context;
   try {
-    browser = await getBrowser();
+    browser = await getBrowser(browserEngine);
     context = await browser.newContext({
       viewport: vp,
       userAgent: device === 'mobile'
@@ -96,11 +100,12 @@ async function proxySiteHandler(req, res, url) {
 
   const viewportWidth = parseInt(url.searchParams.get('width') || '1440', 10);
   const viewportHeight = parseInt(url.searchParams.get('height') || '900', 10);
+  const browserEngine = url.searchParams.get('browser') || 'chromium';
 
   let browser;
   let context;
   try {
-    browser = await getBrowser();
+    browser = await getBrowser(browserEngine);
     context = await browser.newContext({
       viewport: { width: viewportWidth, height: viewportHeight },
     });
@@ -265,10 +270,12 @@ server.listen(port, '127.0.0.1', () => {
   console.log(`  GET  /api/proxy-site   — fetch & snapshot any URL for iframe preview`);
 });
 
-// Graceful shutdown: close Playwright browser
+// Graceful shutdown: close Playwright browsers
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, async () => {
-    if (_browser) await _browser.close().catch(() => {});
+    for (const b of Object.values(_browsers)) {
+      if (b) await b.close().catch(() => {});
+    }
     process.exit(0);
   });
 }

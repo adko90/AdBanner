@@ -726,7 +726,9 @@
     return placements[state.placementPreset] || placements.autopilot;
   }
   function getScriptInstallSnippet(siteId) {
-    return `<script>window.FF_AD_SITE = "${siteId}";</script>\n<script async src="/runtime/ad-placement-loader.js" data-config="/api/published/${siteId}.json"></script>`;
+    return `<script>window.FF_AD_SITE = "${siteId}";<` +
+      `/script>\n<script async src="/runtime/ad-placement-loader.js" data-config="/api/published/${siteId}.json"><` +
+      `/script>`;
   }
   function getPublishedConfigKey(siteId) {
     return `ff_published_site_${siteId}`;
