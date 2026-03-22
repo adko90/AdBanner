@@ -34,6 +34,13 @@ const PROTECTED_SELECTORS = [
   { kind: 'chat',       selectors: ['[id*="chat"]', '[class*="chat"]', '[id*="intercom"]', '[class*="intercom"]', '[id*="drift"]', '[class*="drift"]', '[id*="crisp"]'] },
   { kind: 'dialog',     selectors: ['dialog[open]', '[role="dialog"]', '[aria-modal="true"]'] },
   { kind: 'video',      selectors: ['video', '[id*="player"]', '[class*="player"]', 'iframe[src*="youtube"]', 'iframe[src*="vimeo"]'] },
+  { kind: 'iframe',     selectors: ['iframe:not([src*="youtube"]):not([src*="vimeo"])'] },
+  { kind: 'existing-ad', selectors: [
+    '[id*="ad-"]', '[id*="ad_"]', '[class*="ad-"]', '[class*="ad_"]',
+    '[data-ad]', '[data-ad-slot]', '[data-ad-unit]',
+    'div[id^="google_ads"]', 'div[id^="div-gpt-ad"]', 'ins.adsbygoogle',
+    '[id*="taboola"]', '[id*="outbrain"]', '[class*="sponsored"]',
+  ]},
   { kind: 'sticky-ui',  selectors: [] },
 ];
 
@@ -223,11 +230,15 @@ function collectProtected() {
 // Step 3: Content Zone Analysis (Readability-informed)
 // ---------------------------------------------------------------------------
 
-function analyzeContentZones() {
+function analyzeContentZones(readabilitySelector) {
   const zones = [];
 
-  // Find article/main content containers
-  const contentContainers = document.querySelectorAll('article, [role="main"], main, .article, .post, .entry-content, .post-content');
+  // If Readability identified a content root, use it as the primary container
+  const baseSelectors = 'article, [role="main"], main, .article, .post, .entry-content, .post-content';
+  const selectorStr = readabilitySelector
+    ? `${readabilitySelector}, ${baseSelectors}`
+    : baseSelectors;
+  const contentContainers = document.querySelectorAll(selectorStr);
 
   for (const container of contentContainers) {
     if (!isVisible(container)) continue;
@@ -519,7 +530,8 @@ function scoreSlots(slots) {
 // Main: mapSite()
 // ---------------------------------------------------------------------------
 
-function mapSite() {
+function mapSite(options) {
+  const opts = options || {};
   const device = getDeviceClass();
   const viewport = { width: window.innerWidth, height: window.innerHeight };
   const docHeight = document.documentElement.scrollHeight;
@@ -532,8 +544,8 @@ function mapSite() {
   // Step 2: Protected regions
   const protectedRegions = collectProtected();
 
-  // Step 3: Content zones
-  const contentZones = analyzeContentZones();
+  // Step 3: Content zones (with Readability hint if provided)
+  const contentZones = analyzeContentZones(opts.readabilitySelector);
 
   // Step 4: Slot discovery
   const rawSlots = discoverSlots(topology, protectedRegions, contentZones);
