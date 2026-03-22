@@ -14,8 +14,8 @@ const DEBOUNCE_MS = 300;
  */
 export const DEFAULT_BUILDER_CONFIG = {
   siteId: 'site_demo',
-  mode: 'solid',
-  preset: 'capsule',
+  visualMode: 'solid',
+  shapePreset: 'capsule',
   accent: '#ff3b30',
   headline: 'Break',
   headlineEmphasis: 'Every Limit',

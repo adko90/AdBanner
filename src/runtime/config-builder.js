@@ -8,6 +8,8 @@
 const REGION_TO_ANCHOR = {
   'footer-zone':       'footer',
   'rail-zone':         'floating-right',
+  'left-rail-zone':    'floating-left',
+  'top-sticky-zone':   'top-sticky',
   'content-break':     'inline-article',
   'between-sections':  'inline-article',
   'below-nav-gap':     'inline-article',
@@ -16,6 +18,8 @@ const REGION_TO_ANCHOR = {
 const REGION_TO_PRIORITY = {
   'footer-zone':       20,
   'rail-zone':         10,
+  'left-rail-zone':    10,
+  'top-sticky-zone':   19,
   'content-break':     18,
   'between-sections':  15,
   'below-nav-gap':     16,
@@ -24,6 +28,8 @@ const REGION_TO_PRIORITY = {
 const REGION_TO_SURFACE_LABEL = {
   'footer-zone':       'Footer safe zone',
   'rail-zone':         'Right rail safe zone',
+  'left-rail-zone':    'Left rail safe zone',
+  'top-sticky-zone':   'Top sticky safe zone',
   'content-break':     'Inline article safe zone',
   'between-sections':  'Between-section safe zone',
   'below-nav-gap':     'Below-navigation safe zone',
@@ -32,6 +38,8 @@ const REGION_TO_SURFACE_LABEL = {
 const REGION_TO_AREA_KEY = {
   'footer-zone':       'footer',
   'rail-zone':         'side',
+  'left-rail-zone':    'side',
+  'top-sticky-zone':   'top',
   'content-break':     'inline',
   'between-sections':  'inline',
   'below-nav-gap':     'inline',
@@ -69,6 +77,13 @@ export function buildConfig({ siteId, selectedSlots, opportunities, runtime }) {
         height: rect.height,
         topOffset: rect.y,
         rightInset: 8,
+      };
+    } else if (key === 'top') {
+      areaOverrides.top = {
+        widthRatio: Math.round((rect.width / 1440) * 100) / 100,
+        height: rect.height,
+        topInset: rect.y,
+        centerOffset: 0,
       };
     } else {
       areaOverrides.inline = {

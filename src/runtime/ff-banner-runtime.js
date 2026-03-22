@@ -493,8 +493,8 @@ export const imageDecomposer = { extractDominantColor, generateBlurPlate, morphC
 // ── Default Config ──────────────────────────────────────────
 
 export const DEFAULT_CONFIG = {
-  mode: 'solid',
-  preset: 'capsule',
+  visualMode: 'solid',
+  shapePreset: 'capsule',
   accent: '#ff3b30',
   headline: 'Break',
   headlineEmphasis: 'Every Limit',
@@ -536,7 +536,7 @@ export function renderSideBanner(config, area) {
     : 'position:fixed;top:0;right:0;bottom:0;z-index:2147483647;pointer-events:none;contain:layout style;';
 
   const shadow = host.attachShadow({ mode: 'closed' });
-  const A = config.accent, G = config.mode === 'glass';
+  const A = config.accent, G = config.visualMode === 'glass';
 
   shadow.innerHTML = `
     <style>
@@ -754,7 +754,7 @@ export function renderSideBanner(config, area) {
   });
   panel.addEventListener('mouseleave', () => { cancelAnimationFrame(sideRaf); sideRaf = 0; bo.style.transform = ''; });
 
-  shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'side', preset: config.preset, mode: config.mode }));
+  shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'side', preset: config.shapePreset, mode: config.visualMode }));
   shadow.querySelector('.x').addEventListener('click', () => {
     panel.style.transform = area ? 'translateX(120%)' : 'translateY(-50%) translateX(120%)';
     panel.style.opacity = '0';
@@ -787,7 +787,7 @@ export function renderFooterBanner(config, area) {
     : 'position:fixed;bottom:0;left:0;right:0;z-index:2147483646;pointer-events:none;contain:layout style;';
 
   const shadow = host.attachShadow({ mode: 'closed' });
-  const A = config.accent, G = config.mode === 'glass', P = config.preset;
+  const A = config.accent, G = config.visualMode === 'glass', P = config.shapePreset;
 
   const clip = SHAPE_PRESETS[P] || SHAPE_PRESETS.capsule;
   const bg = G ? 'rgba(255,255,255,0.08)' : 'linear-gradient(95deg, #06060e 0%, ' + darken(A, 0.22) + ' 45%, #0a0818 100%)';
@@ -998,7 +998,7 @@ export function renderFooterBanner(config, area) {
   });
   banner.addEventListener('mouseleave', () => { cancelAnimationFrame(footRaf); footRaf = 0; bk.style.transform = ''; });
 
-  shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'footer', preset: P, mode: config.mode }));
+  shadow.querySelector('.cta').addEventListener('click', () => logEvent('ff:ad:click', { zone: 'footer', preset: P, mode: config.visualMode }));
   shadow.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => logEvent('ff:ad:interaction', { zone: 'footer', chip: c.textContent })));
 
   shadow.querySelector('.dismiss').addEventListener('click', () => {
@@ -1037,7 +1037,7 @@ export function renderInlineBanner(config, anchorNode, area) {
   const shadow = host.attachShadow({ mode: 'open' });
   const accent = config.accent;
   const accent2 = darken(accent, 0.42);
-  const isGlass = config.mode === 'glass';
+  const isGlass = config.visualMode === 'glass';
 
   shadow.innerHTML = `
     <style>
