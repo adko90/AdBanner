@@ -2,7 +2,23 @@ const SITE_KEY_PREFIX = 'ff_published_site_';
 const DEFAULT_SITE_ID = 'site_demo';
 const DEFAULT_CONFIG_ROOT = '/api/published';
 let activeConfig = null;
+let activeConfigSource = 'unknown';
 let resizeFrame = 0;
+const DEFAULT_POLICY = {
+  collisionPadding: { footer: 18, side: 14, inline: 8 },
+  surfaces: [
+    { surfaceId: 'footer-sticky-zone', region: 'footer', category: 'allowed', anchorType: 'footer', behavior: 'sticky-edge' },
+    { surfaceId: 'right-rail-zone', region: 'rail', category: 'allowed', anchorType: 'floating-right', behavior: 'desktop-edge' },
+    { surfaceId: 'inline-article-zone', region: 'content', category: 'allowed', anchorType: 'inline-article', behavior: 'in-flow' }
+  ],
+  protectedRegions: [
+    { kind: 'navigation', label: 'navigation or header', selectors: ['header', 'nav', '[role="navigation"]'] },
+    { kind: 'form', label: 'form or input surface', selectors: ['form', '[role="form"]', 'input', 'textarea', 'select'] },
+    { kind: 'consent', label: 'cookie or consent manager', selectors: ['[id*="cookie"]', '[class*="cookie"]', '[id*="consent"]', '[class*="consent"]'] },
+    { kind: 'chat', label: 'chat launcher or support widget', selectors: ['[id*="chat"]', '[class*="chat"]', '[id*="intercom"]', '[class*="intercom"]'] },
+    { kind: 'dialog', label: 'modal or dialog', selectors: ['dialog[open]', '[role="dialog"]', '[aria-modal="true"]'] }
+  ]
+};
 
 function clamp(value, min, max) {
   const safeMin = Number.isFinite(min) ? min : value;
@@ -38,14 +54,18 @@ async function loadConfig(siteId, configUrl) {
     try {
       const response = await fetch(configUrl, { credentials: 'same-origin' });
       if (!response.ok) throw new Error(`Config request failed: ${response.status}`);
-      return response.json();
+      return { config: await response.json(), source: 'endpoint' };
     } catch (error) {
-      if (stored) return stored;
+      if (stored) return { config: stored, source: 'local-storage-fallback' };
       throw error;
     }
   }
-  if (stored) return stored;
+  if (stored) return { config: stored, source: 'local-storage' };
   throw new Error('No published config source available');
+}
+
+function emitRuntimeEvent(name, detail) {
+  window.dispatchEvent(new CustomEvent(name, { detail: { ...detail, timestamp: Date.now() } }));
 }
 
 function getDeviceClass() {
@@ -62,7 +82,93 @@ function getPageType() {
   return 'generic';
 }
 
-function detectAnchors() {
+function getPolicy(config) {
+  const policy = config && config.policy || {};
+  return {
+    collisionPadding: { ...DEFAULT_POLICY.collisionPadding, ...(policy.collisionPadding || {}) },
+    surfaces: Array.isArray(policy.surfaces) && policy.surfaces.length ? policy.surfaces : DEFAULT_POLICY.surfaces,
+    protectedRegions: Array.isArray(policy.protectedRegions) && policy.protectedRegions.length ? policy.protectedRegions : DEFAULT_POLICY.protectedRegions
+  };
+}
+
+function getRuntimeControls(config) {
+  return {
+    confidenceFloor: config.runtime && Number.isFinite(config.runtime.confidenceFloor) ? config.runtime.confidenceFloor : 0.7,
+    killSwitch: !!(config.runtime && config.runtime.killSwitch),
+    liveEnabled: config.runtime && typeof config.runtime.liveEnabled === 'boolean' ? config.runtime.liveEnabled : true,
+    failClosed: !(config.runtime && config.runtime.failClosed === false),
+    isolationMode: config.runtime && config.runtime.isolationMode || 'shadow-dom'
+  };
+}
+
+function getSurfaceForZone(config, zone) {
+  const policy = getPolicy(config);
+  const anchorType = zone === 'footer' ? 'footer' : zone === 'side' ? 'floating-right' : 'inline-article';
+  return policy.surfaces.find((surface) => surface.anchorType === anchorType) || null;
+}
+
+function areaToRect(area) {
+  if (!area) return null;
+  return {
+    left: area.x,
+    top: area.y,
+    right: area.x + area.width,
+    bottom: area.y + area.height,
+    width: area.width,
+    height: area.height
+  };
+}
+
+function rectsOverlap(a, b, padding = 0) {
+  if (!a || !b) return false;
+  return !(a.right <= (b.left - padding) || a.left >= (b.right + padding) || a.bottom <= (b.top - padding) || a.top >= (b.bottom + padding));
+}
+
+function shouldIgnoreProtectedNode(node) {
+  return !!node.closest('[id^="ff-loader-"], script, style, [data-ff-ignore-protection]');
+}
+
+function collectProtectedRegions(config) {
+  const policy = getPolicy(config);
+  const seen = new Set();
+  const regions = [];
+  function pushRegion(node, kind, label) {
+    if (!node || seen.has(node) || shouldIgnoreProtectedNode(node)) return;
+    const rect = node.getBoundingClientRect();
+    const style = window.getComputedStyle(node);
+    if (!rect.width || !rect.height || style.display === 'none' || style.visibility === 'hidden') return;
+    seen.add(node);
+    regions.push({
+      node,
+      kind,
+      label,
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height
+      }
+    });
+  }
+  policy.protectedRegions.forEach((spec) => {
+    (spec.selectors || []).forEach((selector) => {
+      document.querySelectorAll(selector).forEach((node) => pushRegion(node, spec.kind, spec.label));
+    });
+  });
+  Array.from(document.body.children).forEach((node) => {
+    if (shouldIgnoreProtectedNode(node)) return;
+    const style = window.getComputedStyle(node);
+    if (!['fixed', 'sticky'].includes(style.position)) return;
+    const rect = node.getBoundingClientRect();
+    if (rect.width < 44 || rect.height < 44) return;
+    pushRegion(node, 'sticky-ui', 'sticky site control');
+  });
+  return regions;
+}
+
+function detectAnchors(config) {
   const anchors = [];
   const article = document.querySelector('article, .article, main article');
   if (article) {
@@ -70,7 +176,8 @@ function detectAnchors() {
       zone: 'footer',
       anchorType: 'footer',
       label: 'Footer safe zone',
-      confidence: 0.96
+      confidence: 0.96,
+      surface: getSurfaceForZone(config, 'footer')
     });
   }
   if (getDeviceClass() === 'desktop') {
@@ -78,7 +185,8 @@ function detectAnchors() {
       zone: 'side',
       anchorType: 'floating-right',
       label: 'Right rail anchor',
-      confidence: 0.92
+      confidence: 0.92,
+      surface: getSurfaceForZone(config, 'side')
     });
   }
   if (article) {
@@ -89,17 +197,52 @@ function detectAnchors() {
         anchorType: 'inline-article',
         label: 'Inline article break',
         node: paragraphs[2],
-        confidence: 0.8
+        confidence: 0.8,
+        surface: getSurfaceForZone(config, 'inline')
       });
     }
   }
   return anchors;
 }
 
-function evaluatePlacement(placement, anchor, config) {
+function getCandidateArea(config, anchor) {
+  if (anchor.zone === 'footer') return areaToRect(computeFooterArea(config));
+  if (anchor.zone === 'side') return areaToRect(computeSideArea(config));
+  if (anchor.zone === 'inline' && anchor.node) {
+    const area = computeInlineArea(config, anchor.node);
+    const article = anchor.node.closest('article, .article, main article');
+    const articleRect = article ? article.getBoundingClientRect() : { left: 24 };
+    const anchorRect = anchor.node.getBoundingClientRect();
+    return {
+      left: articleRect.left + area.xOffset,
+      top: anchorRect.top + area.yOffset,
+      right: articleRect.left + area.xOffset + area.width,
+      bottom: anchorRect.top + area.yOffset + area.height,
+      width: area.width,
+      height: area.height
+    };
+  }
+  return null;
+}
+
+function findProtectedCollision(config, anchor, protectedRegions) {
+  const policy = getPolicy(config);
+  const areaRect = getCandidateArea(config, anchor);
+  if (!areaRect) return null;
+  return protectedRegions.find((region) => rectsOverlap(areaRect, region.rect, policy.collisionPadding[anchor.zone] || 8)) || null;
+}
+
+function evaluatePlacement(placement, anchor, config, context) {
   if (!placement) return { eligible: false, reasonCode: 'no_matching_placement' };
-  if (anchor.confidence < (config.runtime && config.runtime.confidenceFloor || 0.7)) {
+  const runtimeControls = getRuntimeControls(config);
+  if (runtimeControls.killSwitch || !runtimeControls.liveEnabled) return { eligible: false, reasonCode: 'kill_switch_active' };
+  if (anchor.surface && anchor.surface.category === 'protected') return { eligible: false, reasonCode: 'surface_blocked' };
+  if (anchor.confidence < runtimeControls.confidenceFloor) {
     return { eligible: false, reasonCode: 'anchor_low_confidence' };
+  }
+  const collision = findProtectedCollision(config, anchor, context.protectedRegions);
+  if (collision) {
+    return { eligible: false, reasonCode: 'protected_region_collision', blockedBy: collision.kind, blockedLabel: collision.label };
   }
   if (placement.environment === 'preview') return { eligible: false, reasonCode: 'preview_only' };
   if (placement.deviceTargets && !placement.deviceTargets.includes(getDeviceClass())) return { eligible: false, reasonCode: 'device_mismatch' };
@@ -109,24 +252,29 @@ function evaluatePlacement(placement, anchor, config) {
 
 function resolvePlacements(config) {
   const placements = Array.isArray(config.placements) ? config.placements : [];
-  return detectAnchors().map((anchor) => {
+  const protectedRegions = collectProtectedRegions(config);
+  const anchors = detectAnchors(config);
+  const resolutions = anchors.map((anchor) => {
     const candidates = placements
       .filter((placement) => placement.anchorType === anchor.anchorType)
       .sort((a, b) => (b.priority || 0) - (a.priority || 0));
     for (const placement of candidates) {
-      const evaluation = evaluatePlacement(placement, anchor, config);
+      const evaluation = evaluatePlacement(placement, anchor, config, { protectedRegions });
       if (evaluation.eligible) {
-        return { render: true, anchor, placement, reasonCode: evaluation.reasonCode };
+        return { render: true, anchor, placement, reasonCode: evaluation.reasonCode, blockedBy: evaluation.blockedBy || null };
       }
     }
     const firstCandidate = candidates[0] || null;
+    const firstEvaluation = firstCandidate ? evaluatePlacement(firstCandidate, anchor, config, { protectedRegions }) : null;
     return {
       render: false,
       anchor,
       placement: firstCandidate,
-      reasonCode: firstCandidate ? evaluatePlacement(firstCandidate, anchor, config).reasonCode : 'no_matching_placement'
+      reasonCode: firstEvaluation ? firstEvaluation.reasonCode : 'no_matching_placement',
+      blockedBy: firstEvaluation ? firstEvaluation.blockedBy || null : null
     };
   });
+  return { resolutions, protectedRegions };
 }
 
 function clearExisting() {
@@ -302,11 +450,39 @@ function createInline(config, anchorNode) {
   anchorNode.insertAdjacentElement('afterend', host);
 }
 
-function renderResolvedPlacements(config) {
+function renderResolvedPlacements(config, source = activeConfigSource) {
   clearExisting();
   activeConfig = config;
-  resolvePlacements(config).forEach((resolution) => {
-    if (!resolution.render) return;
+  activeConfigSource = source;
+  const { resolutions, protectedRegions } = resolvePlacements(config);
+  emitRuntimeEvent('ff:ad:loader', {
+    siteId: config.siteId || DEFAULT_SITE_ID,
+    source,
+    protectedRegions: protectedRegions.length,
+    killSwitch: !!(config.runtime && config.runtime.killSwitch)
+  });
+  resolutions.forEach((resolution) => {
+    emitRuntimeEvent('ff:ad:decision', {
+      render: resolution.render,
+      zone: resolution.anchor.zone,
+      anchorType: resolution.anchor.anchorType,
+      placementId: resolution.placement ? resolution.placement.placementId : null,
+      reasonCode: resolution.reasonCode,
+      blockedBy: resolution.blockedBy || null,
+      siteId: config.siteId || DEFAULT_SITE_ID,
+      source
+    });
+    if (!resolution.render) {
+      emitRuntimeEvent('ff:ad:skip', {
+        zone: resolution.anchor.zone,
+        anchorType: resolution.anchor.anchorType,
+        reasonCode: resolution.reasonCode,
+        blockedBy: resolution.blockedBy || null,
+        siteId: config.siteId || DEFAULT_SITE_ID,
+        source
+      });
+      return;
+    }
     if (resolution.anchor.zone === 'footer') createFooter(config);
     if (resolution.anchor.zone === 'side') createSide(config);
     if (resolution.anchor.zone === 'inline' && resolution.anchor.node) createInline(config, resolution.anchor.node);
@@ -318,9 +494,14 @@ async function boot() {
   const siteId = getSiteId(script);
   const configUrl = getConfigUrl(script, siteId);
   try {
-    const config = await loadConfig(siteId, configUrl);
-    renderResolvedPlacements(config);
+    const { config, source } = await loadConfig(siteId, configUrl);
+    renderResolvedPlacements(config, source);
   } catch (error) {
+    emitRuntimeEvent('ff:ad:loader', {
+      siteId,
+      source: 'unavailable',
+      error: error.message
+    });
     console.warn('Ad placement loader failed safely:', error);
   }
 }
@@ -328,7 +509,7 @@ async function boot() {
 window.addEventListener('resize', () => {
   if (!activeConfig) return;
   cancelAnimationFrame(resizeFrame);
-  resizeFrame = requestAnimationFrame(() => renderResolvedPlacements(activeConfig));
+  resizeFrame = requestAnimationFrame(() => renderResolvedPlacements(activeConfig, activeConfigSource));
 });
 
 if (document.readyState === 'loading') {

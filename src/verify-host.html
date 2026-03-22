@@ -57,11 +57,11 @@
       <p>Modern publishing teams want monetisation that feels native, performs predictably, and does not require engineers to keep reworking templates every time a campaign changes. That means the install contract has to be stable, minimal, and platform-managed.</p>
       <p>The goal of this verification page is simple: simulate what a creator-owned site looks like once the one-time install snippet is in place. The banner runtime should detect safe anchors, resolve published placements, and inject the experiences without disturbing the document structure.</p>
       <div class="hero"></div>
-      <p>In a production product, the live configuration would come from the platform. For this prototype, the verification host can load from a local published config or from the draft page’s local storage publication flow, which makes end-to-end persistence visible during testing.</p>
-      <blockquote>Verification should prove two things: the banners persist outside the editor page, and the host layout remains stable when placements render or safely no-render.</blockquote>
-      <p>If the editor publishes an updated runtime config for this site ID, refreshing this page should reflect the new layout decisions. That gives us a realistic stand-in for the publish-to-live path we eventually want behind a hosted API.</p>
-      <p>The inline placement should appear after this paragraph when the placement rules allow it. The side rail should only appear on desktop. The footer should remain the universal fallback for live published traffic.</p>
-      <p>That combination lets us test device gating, article-aware insertion, and fixed-edge placement without asking a content creator to add custom selectors or banner markup to the page.</p>
+      <p>In the platform product, the live configuration would come from a hosted control plane. This prototype uses a local published-config endpoint so the install snippet still behaves like a one-time managed integration instead of page-specific banner code.</p>
+      <blockquote>Verification should prove three things: placements persist outside the editor page, unsafe regions cause a clean no-render, and the emergency stop can disable the loader without requiring website code changes.</blockquote>
+      <p>If the editor publishes an updated runtime config for this site ID, refreshing this page should reflect the new layout decisions. If a rollback is triggered, this page should step back to the previous live payload through the same install path.</p>
+      <p>The inline placement should appear after this paragraph when the placement rules allow it. The side rail should only appear on desktop. The footer should remain the universal fallback for live published traffic unless the emergency stop is active.</p>
+      <p>That combination lets us test device gating, article-aware insertion, protected-region enforcement, and fixed-edge placement without asking a content creator to add custom selectors or banner markup to the page.</p>
     </article>
   </div>
 
@@ -69,7 +69,7 @@
     const params = new URLSearchParams(window.location.search);
     const siteId = params.get('site') || 'site_demo';
     window.FF_AD_SITE = siteId;
-    document.getElementById('hostNote').textContent = `Verification host is running with site ID "${siteId}". Publish a runtime config from index.html, then reload this page to verify persistence through the install snippet.`;
+    document.getElementById('hostNote').textContent = `Verification host is running with site ID "${siteId}". Publish, roll back, or emergency-stop the live runtime from index.html, then reload here to confirm the install snippet honors the current published state.`;
   </script>
   <script async src="/runtime/ad-placement-loader.js" data-config=""></script>
 </body>
