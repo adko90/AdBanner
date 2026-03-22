@@ -52,6 +52,8 @@ const FORMAT_BY_REGION = {
   'between-sections':'inline',
   'footer-zone':     ['banner', 'leaderboard'],
   'rail-zone':       ['skyscraper', 'medium-rectangle', 'half-page'],
+  'left-rail-zone':  ['skyscraper', 'medium-rectangle', 'half-page'],
+  'top-sticky-zone': ['leaderboard', 'banner'],
 };
 
 const MIN_SLOT_WIDTH  = 200;
@@ -442,6 +444,71 @@ function discoverSlots(topologyRegions, protectedRegions, contentZones) {
     });
   }
 
+  // --- Left rail zone (desktop only) ---
+  if (device === 'desktop') {
+    const contentRegion = topologyRegions.find(r => r.region === 'content');
+    const leftRailWidth = 300;
+    const leftRailHeight = 400;
+    const leftRailX = 16;
+    const leftRailY = contentRegion ? contentRegion.rect.top : 120;
+    const leftRailRect = {
+      left: leftRailX, top: leftRailY,
+      right: leftRailX + leftRailWidth, bottom: leftRailY + leftRailHeight,
+      x: leftRailX, y: leftRailY,
+      width: leftRailWidth, height: leftRailHeight,
+    };
+    const contentLeftEdge = contentZones.length > 0
+      ? Math.min(...contentZones.map(z => z.rect.left))
+      : vw * 0.15;
+    if (leftRailX + leftRailWidth < contentLeftEdge && !isProtected(leftRailRect, 14)) {
+      const contentOverlap = contentZones.some(z =>
+        rectsOverlap(leftRailRect, z.rect, 20)
+      );
+      slots.push({
+        slotId: nextSlotId('left-rail'),
+        region: 'left-rail-zone',
+        anchorSelector: contentRegion ? contentRegion.selector : 'body',
+        rect: leftRailRect,
+        confidence: contentOverlap ? 0.50 : 0.85,
+        supportedFormats: ['skyscraper', 'medium-rectangle', 'half-page'],
+        deviceApplicability: ['desktop'],
+        behavior: 'desktop-edge',
+        risks: contentOverlap ? ['content-overlap'] : [],
+      });
+    }
+  }
+
+  // --- Top sticky edge slot ---
+  {
+    const navEl = document.querySelector('header, nav, [role="banner"], [role="navigation"]');
+    const topY = navEl && isVisible(navEl) ? navEl.getBoundingClientRect().bottom : 0;
+    const stickyHeight = device === 'mobile' ? 60 : 90;
+    const stickyRect = {
+      left: Math.round(vw * 0.06),
+      top: Math.round(topY),
+      right: Math.round(vw * 0.94),
+      bottom: Math.round(topY + stickyHeight),
+      x: Math.round(vw * 0.06),
+      y: Math.round(topY),
+      width: Math.round(vw * 0.88),
+      height: stickyHeight,
+    };
+    if (!isProtected(stickyRect, 12)) {
+      slots.push({
+        slotId: nextSlotId('top-sticky'),
+        region: 'top-sticky-zone',
+        anchorSelector: navEl ? cssPath(navEl) : 'body',
+        anchorPosition: 'after',
+        rect: stickyRect,
+        confidence: 0.88,
+        supportedFormats: ['leaderboard', 'banner'],
+        deviceApplicability: ['desktop', 'tablet', 'mobile'],
+        behavior: 'sticky-edge',
+        risks: [],
+      });
+    }
+  }
+
   // --- Below-navigation gap ---
   const nav = document.querySelector('header, nav, [role="banner"], [role="navigation"]');
   if (nav && isVisible(nav)) {
@@ -527,6 +594,36 @@ function scoreSlots(slots) {
 }
 
 // ---------------------------------------------------------------------------
+// Step 6: DOM Outline (2-level deep)
+// ---------------------------------------------------------------------------
+
+function buildDomOutline() {
+  function describeNode(el) {
+    return {
+      tag: el.tagName.toLowerCase(),
+      id: el.id || null,
+      className: el.className && typeof el.className === 'string'
+        ? el.className.trim() || null
+        : null,
+    };
+  }
+
+  const outline = [];
+  for (const child of document.body.children) {
+    if (child.nodeType !== 1) continue;
+    const node = describeNode(child);
+    const children = [];
+    for (const grandchild of child.children) {
+      if (grandchild.nodeType !== 1) continue;
+      children.push(describeNode(grandchild));
+    }
+    if (children.length > 0) node.children = children;
+    outline.push(node);
+  }
+  return outline;
+}
+
+// ---------------------------------------------------------------------------
 // Main: mapSite()
 // ---------------------------------------------------------------------------
 
@@ -553,6 +650,9 @@ function mapSite(options) {
   // Step 5: Score & rank
   const opportunities = scoreSlots(rawSlots);
 
+  // Step 6: DOM outline (2-level deep)
+  const domOutline = buildDomOutline();
+
   return {
     version: 1,
     mappedAt: new Date().toISOString(),
@@ -567,6 +667,7 @@ function mapSite(options) {
     protectedRegions,
     contentZones,
     opportunities,
+    domOutline,
     summary: {
       totalSlots: opportunities.length,
       highConfidence: opportunities.filter(s => s.score >= 0.8).length,
