@@ -278,6 +278,18 @@ function shellStyles() {
     .ff-status-text { color: #64748b; font-size: 12px; }
     .ff-status-actions { display: flex; gap: 8px; }
 
+    /* Publish button disabled state */
+    .ff-btn-primary[aria-disabled="true"] {
+      opacity: 0.5; cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Toast animation */
+    @keyframes ff-toast-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; animation: none !important; }

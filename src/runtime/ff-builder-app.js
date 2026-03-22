@@ -14,6 +14,7 @@ import { createShell } from './ff-builder-shell.js';
 import { initScanner } from './ff-builder-scanner.js';
 import { initSlotPanel } from './ff-builder-slot-panel.js';
 import { initPreview } from './ff-builder-preview.js';
+import { initPublish } from './ff-builder-publish.js';
 import {
   resolveConfig,
   renderFooterBanner,
@@ -60,11 +61,26 @@ function launchEditor(siteId) {
   // Initialize live preview (F7)
   initPreview({ shadow, shell, store });
 
+  // Initialize publish/export (F10)
+  initPublish({ shadow, shell, store });
+
   // Wire slots:query for preview-all
   shadow.addEventListener('ff:slots:query', (e) => {
     if (e.detail?.callback) {
       e.detail.callback(slotPanel.getSelectedSlots());
     }
+  });
+
+  // ── F12: Publish button gating via safety verdict ──────
+  const publishBtn = shell.querySelector('[aria-label="Publish configuration"]');
+  shadow.addEventListener('ff:slot:active', () => {
+    // Re-evaluate after safety panels render
+    requestAnimationFrame(() => {
+      const panels = shell.querySelectorAll('.ff-safety-panel');
+      const hasBlocked = [...panels].some(p => p._ffVerdict === 'BLOCKED');
+      publishBtn.setAttribute('aria-disabled', String(hasBlocked));
+      publishBtn.title = hasBlocked ? 'Resolve safety conflicts before publishing' : '';
+    });
   });
 
   // Ctrl+Shift+B toggle
