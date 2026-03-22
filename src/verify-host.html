@@ -68,9 +68,25 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const siteId = params.get('site') || 'site_demo';
+    const mode = params.get('mode') || 'live';
     window.FF_AD_SITE = siteId;
-    document.getElementById('hostNote').textContent = `Verification host is running with site ID "${siteId}". Publish, roll back, or emergency-stop the live runtime from index.html, then reload here to confirm the install snippet honors the current published state.`;
+
+    if (mode === 'editor') {
+      document.getElementById('hostNote').textContent = `Builder overlay active for site "${siteId}". Configure your banner visually, then click Publish.`;
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = '/runtime/ff-builder.js';
+      s.dataset.mode = 'editor';
+      s.dataset.site = siteId;
+      document.body.appendChild(s);
+    } else {
+      document.getElementById('hostNote').textContent = `Verification host is running with site ID "${siteId}". Publish a runtime config from the builder (?mode=editor), then reload this page to verify persistence.`;
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = '/runtime/ad-placement-loader.js';
+      s.dataset.site = siteId;
+      document.body.appendChild(s);
+    }
   </script>
-  <script async src="/runtime/ad-placement-loader.js" data-config=""></script>
 </body>
 </html>
