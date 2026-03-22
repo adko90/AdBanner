@@ -11,6 +11,7 @@
 
 import { createBuilderState, getPublishedConfig } from './ff-builder-state.js';
 import { createShell } from './ff-builder-shell.js';
+import { initScanner } from './ff-builder-scanner.js';
 import {
   resolveConfig,
   renderFooterBanner,
@@ -47,6 +48,9 @@ function launchEditor(siteId) {
 
   const shell = createShell({ store, shadow, siteId });
   shadow.appendChild(shell);
+
+  // Initialize scanner (F3)
+  initScanner({ shadow, shell });
 
   // Ctrl+Shift+B toggle
   document.addEventListener('keydown', (e) => {
